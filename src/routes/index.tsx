@@ -1,9 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { BookOpen, MessageCircle, Sparkles } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { LogoIcone } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { jaViuOnboarding } from "@/routes/boas-vindas";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,6 +46,13 @@ const ETAPAS = [
 ];
 
 function Home() {
+  const navigate = useNavigate();
+
+  // Quem chega pela primeira vez vê a apresentação curta; quem já conhece vai direto.
+  function comecar() {
+    void navigate({ to: jaViuOnboarding() ? "/criar" : "/boas-vindas" });
+  }
+
   return (
     <AppShell>
       <section className="mv-entrada py-6 text-center sm:py-10">
@@ -58,17 +66,20 @@ function Home() {
         </h1>
 
         <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
-          Compartilhe sua experiência e nossa inteligência artificial ajuda a transformar aquilo que
-          você sabe em conhecimento organizado.
+          Compartilhe sua experiência. Nós ajudamos a transformá-la em conhecimento organizado.
+        </p>
+
+        <p className="mx-auto mt-3 max-w-md text-base text-muted-foreground">
+          Você não precisa saber escrever, nem entender de tecnologia. É só contar.
         </p>
 
         <div className="mt-8 flex flex-col items-center gap-3">
           <Button
-            asChild
+            onClick={comecar}
             size="lg"
             className="h-14 w-full max-w-md rounded-2xl text-lg font-bold shadow-lg shadow-primary/25"
           >
-            <Link to="/criar">Compartilhar meu conhecimento</Link>
+            Começar agora
           </Button>
           <Button
             asChild

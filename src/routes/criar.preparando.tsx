@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { ERROS, mensagemDeErro } from "@/lib/erros";
 import { generateNextQuestion } from "@/services/aiService";
+import { registrarEvento } from "@/services/analytics";
 import { criarSessao } from "@/services/knowledgeService";
 import { adicionarMensagem } from "@/services/messageService";
 import { lerRascunho } from "@/services/rascunho";
@@ -48,8 +49,10 @@ function Preparando() {
       try {
         // 1. Cria a sessão  2. guarda a descrição da pessoa  3. pede a primeira pergunta à IA.
         const sessao = await criarSessao(user.id, categoria, descricao);
+        registrarEvento("session_started", { categoria });
         await adicionarMensagem(sessao.id, "user", descricao);
         await proximaPerguntaFn({ data: { sessionId: sessao.id } });
+        registrarEvento("conversation_started");
         void navigate({ to: "/conversa/$id", params: { id: sessao.id } });
       } catch (e) {
         iniciado.current = false;

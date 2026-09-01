@@ -6,6 +6,7 @@ import { PassoIndicador } from "@/components/passo-indicador";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CATEGORIAS } from "@/data/categorias";
+import { registrarEvento } from "@/services/analytics";
 import { lerRascunho, salvarRascunho } from "@/services/rascunho";
 import type { CategoriaId } from "@/types";
 
@@ -37,10 +38,16 @@ function EscolherCategoria() {
     if (r.categoria) setSelecionada(r.categoria);
   }, []);
 
-  function continuar() {
-    if (!selecionada) return;
-    salvarRascunho({ categoria: selecionada, descricao: selecionada === "outro" ? outro : "" });
+  function seguir(categoria: CategoriaId, descricao = "") {
+    salvarRascunho({ categoria, descricao });
+    registrarEvento("category_selected", { categoria });
     void navigate({ to: "/criar/descrever" });
+  }
+
+  // Escolher já avança: uma decisão por tela, sem formulário.
+  function escolher(categoria: CategoriaId) {
+    setSelecionada(categoria);
+    if (categoria !== "outro") seguir(categoria);
   }
 
   return (
@@ -49,7 +56,7 @@ function EscolherCategoria() {
 
       <h1 className="mt-4 text-3xl">O que você gostaria de compartilhar?</h1>
       <p className="mt-2 text-lg text-muted-foreground">
-        Escolha a opção que melhor representa o que você deseja preservar.
+        Escolha a opção que mais se parece com o que você quer contar. Nada aqui é definitivo.
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -59,7 +66,7 @@ function EscolherCategoria() {
             <button
               key={c.id}
               type="button"
-              onClick={() => setSelecionada(c.id)}
+              onClick={() => escolher(c.id)}
               aria-pressed={ativa}
               className={`flex min-h-24 w-full items-center gap-4 rounded-3xl border-2 p-5 text-left transition-all ${
                 ativa
@@ -95,14 +102,15 @@ function EscolherCategoria() {
         </div>
       )}
 
-      <Button
-        onClick={continuar}
-        disabled={!selecionada}
-        size="lg"
-        className="mt-8 h-14 w-full rounded-2xl text-lg font-bold"
-      >
-        Continuar
-      </Button>
+      {selecionada === "outro" && (
+        <Button
+          onClick={() => seguir("outro", outro)}
+          size="lg"
+          className="mt-8 h-14 w-full rounded-2xl text-lg font-bold"
+        >
+          Continuar
+        </Button>
+      )}
     </AppShell>
   );
 }

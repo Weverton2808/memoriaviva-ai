@@ -16,6 +16,7 @@ import {
 import { getCategoria } from "@/data/categorias";
 import { useAuth } from "@/hooks/use-auth";
 import { ERROS, mensagemDeErro } from "@/lib/erros";
+import { registrarEvento } from "@/services/analytics";
 import { ETAPAS_GERACAO, tempoLeitura } from "@/services/gerador";
 import { atualizarArtigo, getArtigo } from "@/services/knowledgeService";
 
@@ -44,6 +45,7 @@ function Guia() {
   const { user } = useAuth();
   const [etapa, setEtapa] = useState(novo ? 0 : ETAPAS_GERACAO.length);
   const [privacidade, setPrivacidade] = useState(false);
+  const [preservado, setPreservado] = useState(false);
 
   const consulta = useQuery({ queryKey: ["artigo", id], queryFn: () => getArtigo(id) });
   const artigo = consulta.data ?? null;
@@ -64,6 +66,8 @@ function Guia() {
       await queryClient.invalidateQueries({ queryKey: ["artigo", id] });
       await queryClient.invalidateQueries({ queryKey: ["meus-artigos"] });
       setPrivacidade(false);
+      setPreservado(true);
+      registrarEvento(publico ? "guide_published" : "guide_kept_private");
       toast.success(
         publico
           ? "Conhecimento publicado para outras pessoas."
@@ -131,6 +135,16 @@ function Guia() {
 
   return (
     <AppShell>
+      {novo && (
+        <section className="mv-entrada mb-8 rounded-3xl border-2 border-primary bg-primary-soft p-6 text-center">
+          <h2 className="text-2xl">Você transformou sua experiência em conhecimento.</h2>
+          <p className="mt-2 text-base text-accent-foreground">
+            Agora isso pode continuar ajudando pessoas no futuro. Seu conhecimento começa privado —
+            só você o vê até decidir o contrário.
+          </p>
+        </section>
+      )}
+
       <article className="mv-entrada">
         <p className="text-sm font-bold tracking-widest text-primary">{cat.rotulo}</p>
         <h1 className="mt-2 text-3xl sm:text-4xl">{artigo.title}</h1>
@@ -163,18 +177,39 @@ function Guia() {
       </article>
 
       <div className="mt-10 grid gap-3">
-        {meu && (
+        {meu && !preservado && (
           <Button
             size="lg"
             className="h-14 rounded-2xl text-lg font-bold"
             onClick={() => {
-              toast.success("Conhecimento salvo no seu perfil.");
-              void navigate({ to: "/perfil" });
+              registrarEvento("guide_saved");
+              setPreservado(true);
+              toast.success("Conhecimento preservado no seu perfil.");
             }}
           >
             <Save className="size-5" aria-hidden="true" />
             Salvar meu conhecimento
           </Button>
+        )}
+
+        {meu && preservado && (
+          <section className="mv-entrada rounded-3xl border-2 border-primary bg-card p-6">
+            <h2 className="text-2xl">Seu conhecimento foi preservado.</h2>
+            <p className="mt-2 text-base text-muted-foreground">
+              Ele fica guardado no seu perfil e você pode alterar ou editar quando quiser.
+            </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <Button asChild size="lg" className="h-14 rounded-2xl text-base font-bold">
+                <Link to="/perfil">Ver meus conhecimentos</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-14 rounded-2xl text-base">
+                <Link to="/criar">Criar outro</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-14 rounded-2xl text-base">
+                <Link to="/explorar">Explorar conhecimentos</Link>
+              </Button>
+            </div>
+          </section>
         )}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -203,7 +238,7 @@ function Guia() {
               onClick={() => setPrivacidade(true)}
             >
               <Globe className="size-5" aria-hidden="true" />
-              Publicar
+              Privacidade
             </Button>
           )}
         </div>
@@ -216,7 +251,7 @@ function Guia() {
               Como você deseja guardar este conhecimento?
             </DialogTitle>
             <DialogDescription className="text-base">
-              Você pode mudar essa escolha quando quiser.
+              Seu conhecimento começa privado. Você pode mudar essa escolha quando quiser.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
@@ -225,7 +260,7 @@ function Guia() {
               onClick={() => publicar.mutate(false)}
               className="rounded-2xl border-2 border-border p-5 text-left hover:border-primary"
             >
-              <span className="block text-xl font-bold">🔒 Privado</span>
+              <span className="block text-xl font-bold">🔒 Somente para mim</span>
               <span className="block text-base text-muted-foreground">
                 Apenas você poderá acessar.
               </span>
@@ -235,7 +270,7 @@ function Guia() {
               onClick={() => publicar.mutate(true)}
               className="rounded-2xl border-2 border-border p-5 text-left hover:border-primary"
             >
-              <span className="block text-xl font-bold">🌎 Público</span>
+              <span className="block text-xl font-bold">🌎 Compartilhar com outras pessoas</span>
               <span className="block text-base text-muted-foreground">
                 Outras pessoas poderão encontrar e aprender com sua experiência.
               </span>

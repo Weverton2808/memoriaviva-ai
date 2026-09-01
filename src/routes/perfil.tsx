@@ -52,8 +52,8 @@ function Perfil() {
           <h1 className="text-3xl">{nome}</h1>
           <p className="text-base text-muted-foreground">
             {meus.length === 0
-              ? "Nenhum conhecimento registrado ainda"
-              : `${meus.length} conhecimento${meus.length > 1 ? "s" : ""} registrado${
+              ? "Nenhum conhecimento preservado ainda"
+              : `${meus.length} conhecimento${meus.length > 1 ? "s" : ""} preservado${
                   meus.length > 1 ? "s" : ""
                 }`}
           </p>
@@ -72,7 +72,7 @@ function Perfil() {
         </Link>
       </Button>
 
-      <h2 className="mt-10 text-2xl">Meus conhecimentos</h2>
+      <h2 className="mt-10 text-2xl">Conhecimentos preservados</h2>
 
       {consulta.isLoading ? (
         <p className="mt-4 text-lg text-muted-foreground">Carregando…</p>
