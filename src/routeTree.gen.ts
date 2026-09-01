@@ -18,6 +18,7 @@ import { Route as ConversaIdRouteImport } from './routes/conversa.$id'
 import { Route as CriarIndexRouteImport } from './routes/criar.index'
 import { Route as CriarDescreverRouteImport } from './routes/criar.descrever'
 import { Route as CriarPreparandoRouteImport } from './routes/criar.preparando'
+import { Route as GuiaIdIndexRouteImport } from './routes/guia.$id.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -64,6 +65,11 @@ const CriarPreparandoRoute = CriarPreparandoRouteImport.update({
   path: '/criar/preparando',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuiaIdIndexRoute = GuiaIdIndexRouteImport.update({
+  id: '/guia/$id/',
+  path: '/guia/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
   '/criar/': typeof CriarIndexRoute
+  '/guia/$id/': typeof GuiaIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
   '/criar': typeof CriarIndexRoute
+  '/guia/$id': typeof GuiaIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
   '/criar/': typeof CriarIndexRoute
+  '/guia/$id/': typeof GuiaIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/criar/descrever'
     | '/criar/preparando'
     | '/criar/'
+    | '/guia/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/criar/descrever'
     | '/criar/preparando'
     | '/criar'
+    | '/guia/$id'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/criar/descrever'
     | '/criar/preparando'
     | '/criar/'
+    | '/guia/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,6 +157,7 @@ export interface RootRouteChildren {
   CriarDescreverRoute: typeof CriarDescreverRoute
   CriarPreparandoRoute: typeof CriarPreparandoRoute
   CriarIndexRoute: typeof CriarIndexRoute
+  GuiaIdIndexRoute: typeof GuiaIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -212,6 +225,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CriarPreparandoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guia/$id/': {
+      id: '/guia/$id/'
+      path: '/guia/$id'
+      fullPath: '/guia/$id/'
+      preLoaderRoute: typeof GuiaIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   CriarDescreverRoute: CriarDescreverRoute,
   CriarPreparandoRoute: CriarPreparandoRoute,
   CriarIndexRoute: CriarIndexRoute,
+  GuiaIdIndexRoute: GuiaIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
