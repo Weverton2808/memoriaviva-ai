@@ -249,11 +249,13 @@ export const generateNextQuestion = createServerFn({ method: "POST" })
           chave,
         );
       } catch (erro) {
-        console.error("Falha na IA, usando modo demonstração:", erro);
+        // Erro controlado: a conversa continua salva e a pessoa pode tentar de novo.
+        throw erroControlado("generateNextQuestion", erro);
       }
     }
 
     if (!pergunta) {
+      if (!demo) throw erroControlado("generateNextQuestion", "resposta vazia da IA");
       pergunta = proximaPergunta(sessao.category as CategoriaId, sessao.topic, mensagens).pergunta;
     }
 
