@@ -45,16 +45,15 @@ public.messages
 
 public.knowledge_articles
   id uuid pk default gen_random_uuid()
-  session_id uuid -> knowledge_sessions(id)
   user_id uuid -> auth.users(id)
+  session_id uuid -> knowledge_sessions(id)
   title text not null
-  category knowledge_category not null
-  topic text not null
   summary text
-  sections jsonb
-  tags text[]
+  content text not null
+  category knowledge_category not null
   is_public boolean default true
   created_at timestamptz default now()
+  updated_at timestamptz default now()
 ```
 
 ## Etapas
