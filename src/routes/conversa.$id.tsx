@@ -81,8 +81,11 @@ function Conversa() {
 
   const criarGuia = useMutation({
     mutationFn: () => gerarGuiaFn({ data: { sessionId: id } }),
-    onSuccess: (r) =>
-      navigate({ to: "/guia/$id", params: { id: r.articleId }, search: { novo: true } }),
+    onSuccess: (r) => {
+      // Avisos da checagem de qualidade (privacidade, pontos a esclarecer).
+      for (const aviso of r.avisos ?? []) toast.info(aviso, { duration: 8000 });
+      navigate({ to: "/guia/$id", params: { id: r.articleId }, search: { novo: true } });
+    },
     onError: (e) => toast.error(mensagemDeErro(e, ERROS.guia)),
   });
 

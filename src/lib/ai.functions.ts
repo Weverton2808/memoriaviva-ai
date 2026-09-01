@@ -13,6 +13,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 import { uid } from "@/lib/uid";
 import { montarPromptGuia, montarSystemPrompt } from "@/services/prompt-entrevistadora";
+import {
+  ANALISE_PADRAO,
+  avisoParaGuia,
+  bloqueiosParaPublicar,
+  instrucoesDoGuia,
+  montarPromptAnalise,
+  type AnaliseConhecimento,
+} from "@/services/prompt-analise-qualidade";
 import { proximaPergunta } from "@/services/entrevista";
 import { gerarGuia } from "@/services/gerador";
 import type { CategoriaId, GuiaEstruturado, KnowledgeSession, Message, Secao } from "@/types";
@@ -117,6 +125,57 @@ async function carregarContexto(supabase: Cliente, sessionId: string) {
   };
 }
 
+function transcrever(mensagens: Message[]): string {
+  return mensagens
+    .filter((m) => m.role !== "system")
+    .map((m) => `${m.role === "user" ? "PESSOA" : "ENTREVISTADORA"}: ${m.content}`)
+    .join("\n\n");
+}
+
+function extrairObjeto<T>(texto: string): T | null {
+  const inicio = texto.indexOf("{");
+  const fim = texto.lastIndexOf("}");
+  if (inicio < 0 || fim <= inicio) return null;
+  try {
+    return JSON.parse(texto.slice(inicio, fim + 1)) as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Camada interna de qualidade: organiza, procura lacunas e contradições,
+ * separa experiência pessoal de fato e sinaliza risco/privacidade.
+ * O resultado nunca é mostrado à pessoa como nota.
+ */
+async function analisarConversa(
+  sessao: KnowledgeSession,
+  mensagens: Message[],
+  chave: string,
+): Promise<AnaliseConhecimento | null> {
+  try {
+    const bruto = await chamarIA(
+      [
+        {
+          role: "system",
+          content: montarPromptAnalise(
+            sessao.category as CategoriaId,
+            sessao.topic,
+            transcrever(mensagens),
+          ),
+        },
+        { role: "user", content: "Analise a conversa e responda somente com o JSON." },
+      ],
+      chave,
+    );
+    const analise = extrairObjeto<Partial<AnaliseConhecimento>>(bruto);
+    return analise ? { ...ANALISE_PADRAO, ...analise } : null;
+  } catch (erro) {
+    console.error("Falha na análise de qualidade:", erro);
+    return null;
+  }
+}
+
 /* ------------------------- generateNextQuestion -------------------------- */
 
 export const generateNextQuestion = createServerFn({ method: "POST" })
@@ -131,6 +190,14 @@ export const generateNextQuestion = createServerFn({ method: "POST" })
 
     const chave = process.env["LOVABLE_API_KEY"];
     let pergunta = "";
+    const respostas = mensagens.filter((m) => m.role === "user").length;
+
+    // A partir do mínimo de respostas, a camada de qualidade decide se já dá
+    // para gerar o guia e aponta o que ainda falta perguntar.
+    let analise: AnaliseConhecimento | null = null;
+    if (!modoDemo() && chave && respostas >= 8) {
+      analise = await analisarConversa(sessao, mensagens, chave);
+    }
 
     if (!modoDemo() && chave) {
       try {
@@ -146,7 +213,13 @@ export const generateNextQuestion = createServerFn({ method: "POST" })
             {
               role: "system",
               content:
-                "Faça APENAS a próxima pergunta da entrevista: uma única pergunta, curta e natural, sem numerar e sem comentários extras.",
+                "Faça APENAS a próxima pergunta da entrevista: uma única pergunta, curta e natural, sem numerar e sem comentários extras." +
+                (analise && analise.missing_information.length > 0
+                  ? `\nAinda falta esclarecer (escolha o ponto mais importante): ${analise.missing_information.join("; ")}.`
+                  : "") +
+                (analise && analise.possible_contradictions.length > 0
+                  ? `\nHá pontos que parecem diferentes entre si. Peça esclarecimento com gentileza, sem acusar: ${analise.possible_contradictions.join("; ")}.`
+                  : ""),
             },
           ],
           chave,
@@ -167,10 +240,9 @@ export const generateNextQuestion = createServerFn({ method: "POST" })
       .single();
     if (error || !inserida) throw new Error("Não conseguimos salvar a próxima pergunta.");
 
-    const respostas = mensagens.filter((m) => m.role === "user").length;
     return {
       message: inserida as unknown as Message,
-      oferecerGuia: respostas >= 8,
+      oferecerGuia: respostas >= 8 && (analise ? analise.ready_for_guide : true),
     };
   });
 
@@ -224,19 +296,20 @@ export const generateKnowledgeGuide = createServerFn({ method: "POST" })
     let title = "";
     let summary = "";
     let content: Secao[] = [];
+    let analise: AnaliseConhecimento | null = null;
 
     if (!modoDemo() && chave) {
       try {
-        const transcricao = mensagens
-          .filter((m) => m.role !== "system")
-          .map((m) => `${m.role === "user" ? "PESSOA" : "ENTREVISTADORA"}: ${m.content}`)
-          .join("\n\n");
+        const transcricao = transcrever(mensagens);
+        analise = await analisarConversa(sessao, mensagens, chave);
 
         const bruto = await chamarIA(
           [
             {
               role: "system",
-              content: montarPromptGuia(sessao.category as CategoriaId, sessao.topic, transcricao),
+              content:
+                montarPromptGuia(sessao.category as CategoriaId, sessao.topic, transcricao) +
+                (analise ? `\n\n${instrucoesDoGuia(analise)}` : ""),
             },
             {
               role: "user",
@@ -265,6 +338,11 @@ export const generateKnowledgeGuide = createServerFn({ method: "POST" })
       content = simulado.content;
     }
 
+    // Aviso discreto de contexto: só quando a análise indica risco ou
+    // afirmações baseadas em experiência pessoal.
+    const aviso = analise ? avisoParaGuia(analise) : null;
+    if (aviso) content = [...content, { id: uid(), titulo: "Observação", texto: aviso }];
+
     const { data: inserido, error } = await supabase
       .from("knowledge_articles")
       .insert({
@@ -285,5 +363,8 @@ export const generateKnowledgeGuide = createServerFn({ method: "POST" })
       .update({ status: "completed" })
       .eq("id", sessao.id);
 
-    return { articleId: (inserido as { id: string }).id };
+    return {
+      articleId: (inserido as { id: string }).id,
+      avisos: analise ? bloqueiosParaPublicar(analise) : [],
+    };
   });
