@@ -24,7 +24,7 @@ export default defineConfig({
         // O manifesto já é servido de public/manifest.webmanifest.
         manifest: false,
         includeAssets: [
-          "favicon.ico",
+          
           "favicon.png",
           "apple-touch-icon.png",
           "icon-192.png",
