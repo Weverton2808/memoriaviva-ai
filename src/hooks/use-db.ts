@@ -1,23 +1,30 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 
 import { getPerfil, inscrever } from "@/services/db";
 import type { Profile } from "@/types";
 
-/** Lê um valor do banco local e re-renderiza quando ele muda. */
-export function useDb<T>(seletor: () => T, servidor: T): T {
-  const subscribe = useCallback((f: () => void) => inscrever(f), []);
-  return useSyncExternalStore(subscribe, seletor, () => servidor);
+/**
+ * Lê dados do banco local apenas no cliente (evita mismatch de hidratação)
+ * e re-renderiza sempre que algo é gravado.
+ */
+export function useDb<T>(seletor: () => T, inicial: T): T {
+  const [valor, setValor] = useState<T>(inicial);
+
+  useEffect(() => {
+    setValor(seletor());
+    return inscrever(() => setValor(seletor()));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return valor;
 }
 
 export function usePerfil(): Profile | null {
   return useDb(() => getPerfil(), null);
 }
 
-/** Evita mismatch de hidratação em telas que dependem de localStorage. */
 export function useHidratado() {
-  return useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const [ok, setOk] = useState(false);
+  useEffect(() => setOk(true), []);
+  return ok;
 }
