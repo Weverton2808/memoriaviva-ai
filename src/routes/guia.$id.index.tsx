@@ -19,9 +19,8 @@ import { ETAPAS_GERACAO, tempoLeitura } from "@/services/gerador";
 import type { KnowledgeArticle } from "@/types";
 
 export const Route = createFileRoute("/guia/$id/")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    novo: search["novo"] === true || search["novo"] === "true",
-  }),
+  validateSearch: (search: Record<string, unknown>): { novo?: boolean } =>
+    search["novo"] === true || search["novo"] === "true" ? { novo: true } : {},
   head: () => ({
     meta: [
       { title: "Guia de conhecimento — Memória Viva" },
@@ -112,10 +111,11 @@ function Guia() {
   async function compartilhar() {
     const url = typeof window !== "undefined" ? window.location.href : "";
     try {
-      if (typeof navigator !== "undefined" && "share" in navigator) {
-        await navigator.share({ title: artigo!.title, url });
-      } else {
-        await navigator.clipboard.writeText(url);
+      const nav: Navigator | undefined = typeof navigator === "undefined" ? undefined : navigator;
+      if (nav && typeof nav.share === "function") {
+        await nav.share({ title: artigo!.title, url });
+      } else if (nav?.clipboard) {
+        await nav.clipboard.writeText(url);
         toast.success("Link copiado.");
       }
     } catch {

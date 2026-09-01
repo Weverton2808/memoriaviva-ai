@@ -4,7 +4,9 @@ import { BookOpen, Globe, Lock, Plus, Settings } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { getCategoria } from "@/data/categorias";
-import { useBanco } from "@/hooks/use-db";
+import { useDb, usePerfil } from "@/hooks/use-db";
+import { listarMeusArtigos } from "@/services/db";
+import type { KnowledgeArticle } from "@/types";
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
@@ -22,8 +24,8 @@ export const Route = createFileRoute("/perfil")({
 });
 
 function Perfil() {
-  const { perfil, artigos } = useBanco();
-  const meus = artigos.filter((a) => !a.demo);
+  const perfil = usePerfil();
+  const meus = useDb<KnowledgeArticle[]>(() => listarMeusArtigos(), []);
 
   return (
     <AppShell>
