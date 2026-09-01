@@ -136,7 +136,10 @@ function Entrar() {
 
         <p className="mt-4 text-center text-base text-muted-foreground">ou use seu e-mail</p>
 
-        <form onSubmit={(e) => void enviar(e)} className="mt-4 space-y-5">
+        <form onSubmit={(e) => {
+            e.preventDefault();
+            void enviar(e);
+          }} className="mt-4 space-y-5">
           {modo === "cadastrar" && (
             <div>
               <label htmlFor="nome" className="block text-lg font-semibold">
