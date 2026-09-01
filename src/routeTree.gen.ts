@@ -10,15 +10,25 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ExplorarRouteImport } from './routes/explorar'
-import { Route as NovaRouteImport } from './routes/nova'
-import { Route as ConhecimentoIdRouteImport } from './routes/conhecimento.$id'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as ConversaIdRouteImport } from './routes/conversa.$id'
+import { Route as CriarIndexRouteImport } from './routes/criar.index'
+import { Route as CriarDescreverRouteImport } from './routes/criar.descrever'
+import { Route as CriarPreparandoRouteImport } from './routes/criar.preparando'
+import { Route as GuiaIdIndexRouteImport } from './routes/guia.$id.index'
+import { Route as GuiaIdEditarRouteImport } from './routes/guia.$id.editar'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntrarRoute = EntrarRouteImport.update({
@@ -31,14 +41,9 @@ const ExplorarRoute = ExplorarRouteImport.update({
   path: '/explorar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const NovaRoute = NovaRouteImport.update({
-  id: '/nova',
-  path: '/nova',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConhecimentoIdRoute = ConhecimentoIdRouteImport.update({
-  id: '/conhecimento/$id',
-  path: '/conhecimento/$id',
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConversaIdRoute = ConversaIdRouteImport.update({
@@ -46,66 +51,126 @@ const ConversaIdRoute = ConversaIdRouteImport.update({
   path: '/conversa/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CriarIndexRoute = CriarIndexRouteImport.update({
+  id: '/criar/',
+  path: '/criar/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CriarDescreverRoute = CriarDescreverRouteImport.update({
+  id: '/criar/descrever',
+  path: '/criar/descrever',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CriarPreparandoRoute = CriarPreparandoRouteImport.update({
+  id: '/criar/preparando',
+  path: '/criar/preparando',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuiaIdIndexRoute = GuiaIdIndexRouteImport.update({
+  id: '/guia/$id/',
+  path: '/guia/$id/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuiaIdEditarRoute = GuiaIdEditarRouteImport.update({
+  id: '/guia/$id/editar',
+  path: '/guia/$id/editar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/entrar': typeof EntrarRoute
   '/explorar': typeof ExplorarRoute
-  '/nova': typeof NovaRoute
-  '/conhecimento/$id': typeof ConhecimentoIdRoute
+  '/perfil': typeof PerfilRoute
   '/conversa/$id': typeof ConversaIdRoute
+  '/criar/descrever': typeof CriarDescreverRoute
+  '/criar/preparando': typeof CriarPreparandoRoute
+  '/criar/': typeof CriarIndexRoute
+  '/guia/$id/editar': typeof GuiaIdEditarRoute
+  '/guia/$id/': typeof GuiaIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/entrar': typeof EntrarRoute
   '/explorar': typeof ExplorarRoute
-  '/nova': typeof NovaRoute
-  '/conhecimento/$id': typeof ConhecimentoIdRoute
+  '/perfil': typeof PerfilRoute
   '/conversa/$id': typeof ConversaIdRoute
+  '/criar/descrever': typeof CriarDescreverRoute
+  '/criar/preparando': typeof CriarPreparandoRoute
+  '/criar': typeof CriarIndexRoute
+  '/guia/$id/editar': typeof GuiaIdEditarRoute
+  '/guia/$id': typeof GuiaIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/entrar': typeof EntrarRoute
   '/explorar': typeof ExplorarRoute
-  '/nova': typeof NovaRoute
-  '/conhecimento/$id': typeof ConhecimentoIdRoute
+  '/perfil': typeof PerfilRoute
   '/conversa/$id': typeof ConversaIdRoute
+  '/criar/descrever': typeof CriarDescreverRoute
+  '/criar/preparando': typeof CriarPreparandoRoute
+  '/criar/': typeof CriarIndexRoute
+  '/guia/$id/editar': typeof GuiaIdEditarRoute
+  '/guia/$id/': typeof GuiaIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/configuracoes'
     | '/entrar'
     | '/explorar'
-    | '/nova'
-    | '/conhecimento/$id'
+    | '/perfil'
     | '/conversa/$id'
+    | '/criar/descrever'
+    | '/criar/preparando'
+    | '/criar/'
+    | '/guia/$id/editar'
+    | '/guia/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/configuracoes'
     | '/entrar'
     | '/explorar'
-    | '/nova'
-    | '/conhecimento/$id'
+    | '/perfil'
     | '/conversa/$id'
+    | '/criar/descrever'
+    | '/criar/preparando'
+    | '/criar'
+    | '/guia/$id/editar'
+    | '/guia/$id'
   id:
     | '__root__'
     | '/'
+    | '/configuracoes'
     | '/entrar'
     | '/explorar'
-    | '/nova'
-    | '/conhecimento/$id'
+    | '/perfil'
     | '/conversa/$id'
+    | '/criar/descrever'
+    | '/criar/preparando'
+    | '/criar/'
+    | '/guia/$id/editar'
+    | '/guia/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
   EntrarRoute: typeof EntrarRoute
   ExplorarRoute: typeof ExplorarRoute
-  NovaRoute: typeof NovaRoute
-  ConhecimentoIdRoute: typeof ConhecimentoIdRoute
+  PerfilRoute: typeof PerfilRoute
   ConversaIdRoute: typeof ConversaIdRoute
+  CriarDescreverRoute: typeof CriarDescreverRoute
+  CriarPreparandoRoute: typeof CriarPreparandoRoute
+  CriarIndexRoute: typeof CriarIndexRoute
+  GuiaIdEditarRoute: typeof GuiaIdEditarRoute
+  GuiaIdIndexRoute: typeof GuiaIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -115,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entrar': {
@@ -131,18 +203,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExplorarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/nova': {
-      id: '/nova'
-      path: '/nova'
-      fullPath: '/nova'
-      preLoaderRoute: typeof NovaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/conhecimento/$id': {
-      id: '/conhecimento/$id'
-      path: '/conhecimento/$id'
-      fullPath: '/conhecimento/$id'
-      preLoaderRoute: typeof ConhecimentoIdRouteImport
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conversa/$id': {
@@ -152,16 +217,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConversaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/criar/': {
+      id: '/criar/'
+      path: '/criar'
+      fullPath: '/criar/'
+      preLoaderRoute: typeof CriarIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/criar/descrever': {
+      id: '/criar/descrever'
+      path: '/criar/descrever'
+      fullPath: '/criar/descrever'
+      preLoaderRoute: typeof CriarDescreverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/criar/preparando': {
+      id: '/criar/preparando'
+      path: '/criar/preparando'
+      fullPath: '/criar/preparando'
+      preLoaderRoute: typeof CriarPreparandoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guia/$id/': {
+      id: '/guia/$id/'
+      path: '/guia/$id'
+      fullPath: '/guia/$id/'
+      preLoaderRoute: typeof GuiaIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guia/$id/editar': {
+      id: '/guia/$id/editar'
+      path: '/guia/$id/editar'
+      fullPath: '/guia/$id/editar'
+      preLoaderRoute: typeof GuiaIdEditarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
   EntrarRoute: EntrarRoute,
   ExplorarRoute: ExplorarRoute,
-  NovaRoute: NovaRoute,
-  ConhecimentoIdRoute: ConhecimentoIdRoute,
+  PerfilRoute: PerfilRoute,
   ConversaIdRoute: ConversaIdRoute,
+  CriarDescreverRoute: CriarDescreverRoute,
+  CriarPreparandoRoute: CriarPreparandoRoute,
+  CriarIndexRoute: CriarIndexRoute,
+  GuiaIdEditarRoute: GuiaIdEditarRoute,
+  GuiaIdIndexRoute: GuiaIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

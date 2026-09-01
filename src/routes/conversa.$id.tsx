@@ -1,30 +1,41 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { ArrowLeft, Info, Plus, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { SiteHeader } from "@/components/site-header";
+
+import { LogoIcone } from "@/components/logo";
+import { Button } from "@/components/ui/button";
 import {
-  gerarArtigo,
-  getCategoria,
-  loadStore,
-  proximaPergunta,
-  saveStore,
-  totalPerguntas,
-  uid,
-  type KnowledgeSession,
-  type Message,
-} from "@/lib/memoria";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useHidratado } from "@/hooks/use-db";
+import {
+  adicionarMensagem,
+  atualizarStatusSessao,
+  getPerfil,
+  getSessao,
+  listarMensagens,
+  salvarArtigo,
+} from "@/services/db";
+import { mensagemProgresso, proximaPergunta, MIN_PERGUNTAS } from "@/services/entrevista";
+import { gerarGuia } from "@/services/gerador";
+import type { KnowledgeSession, Message } from "@/types";
 
 export const Route = createFileRoute("/conversa/$id")({
   head: () => ({
     meta: [
-      { title: "Conversa com a entrevistadora — Memória Viva" },
+      { title: "Registrando sua experiência — Memória Viva" },
       {
         name: "description",
-        content:
-          "Responda com calma às perguntas da entrevistadora e transforme sua experiência em conhecimento organizado.",
+        content: "Converse e responda perguntas simples sobre aquilo que você sabe.",
       },
-      { property: "og:title", content: "Conversa com a entrevistadora — Memória Viva" },
-      { property: "og:description", content: "Uma pergunta de cada vez, no seu ritmo." },
-      { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Registrando sua experiência — Memória Viva" },
+      { property: "og:description", content: "Uma conversa tranquila sobre o que você sabe." },
     ],
   }),
   component: Conversa,
@@ -33,214 +44,229 @@ export const Route = createFileRoute("/conversa/$id")({
 function Conversa() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const hidratado = useHidratado();
   const [sessao, setSessao] = useState<KnowledgeSession | null>(null);
   const [mensagens, setMensagens] = useState<Message[]>([]);
   const [texto, setTexto] = useState("");
-  const [pronta, setPronta] = useState(false);
+  const [pensando, setPensando] = useState(false);
+  const [oferta, setOferta] = useState(false);
   const fim = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const store = loadStore();
-    const s = store.sessions.find((x) => x.id === id) ?? null;
-    setSessao(s);
-    let msgs = store.messages.filter((m) => m.session_id === id);
-    if (s && msgs.length === 0) {
-      const { pergunta } = proximaPergunta(s.category, s.topic, []);
-      const primeira: Message = {
-        id: uid(),
-        session_id: s.id,
-        role: "assistant",
-        content: pergunta,
-        created_at: new Date().toISOString(),
-      };
-      msgs = [primeira];
-      saveStore({ messages: [...store.messages, primeira] });
+    if (!hidratado) return;
+    const s = getSessao(id);
+    if (!s) {
+      void navigate({ to: "/criar" });
+      return;
     }
-    setMensagens(msgs);
-    setPronta(true);
-  }, [id]);
+    setSessao(s);
+    setMensagens(listarMensagens(id));
+  }, [hidratado, id, navigate]);
 
   useEffect(() => {
     fim.current?.scrollIntoView({ behavior: "smooth" });
-  }, [mensagens.length]);
+  }, [mensagens.length, pensando]);
 
-  const respostas = mensagens.filter((m) => m.role === "user").map((m) => m.content);
-  const total = totalPerguntas(respostas);
-  const feitas = Math.min(respostas.length, total);
-  const concluida = respostas.length >= total;
+  const respostas = mensagens.filter((m) => m.role === "user").length - 1;
 
-  function enviar(e: React.FormEvent) {
-    e.preventDefault();
-    if (!sessao || !texto.trim()) return;
-    const agora = new Date().toISOString();
-    const resposta: Message = {
-      id: uid(),
-      session_id: sessao.id,
-      role: "user",
-      content: texto.trim(),
-      created_at: agora,
-    };
-    const novasRespostas = [...respostas, resposta.content];
-    const novas: Message[] = [...mensagens, resposta];
-
-    if (novasRespostas.length < totalPerguntas(novasRespostas)) {
-      const { pergunta } = proximaPergunta(sessao.category, sessao.topic, novasRespostas);
-      novas.push({
-        id: uid(),
-        session_id: sessao.id,
-        role: "assistant",
-        content: pergunta,
-        created_at: agora,
-      });
-    } else {
-      novas.push({
-        id: uid(),
-        session_id: sessao.id,
-        role: "assistant",
-        content:
-          "Que conversa rica! Já tenho tudo o que preciso. Quando quiser, toque no botão abaixo e eu organizo tudo isso em um texto bonito para você guardar e compartilhar.",
-        created_at: agora,
-      });
-    }
-
-    const store = loadStore();
-    saveStore({
-      messages: [...store.messages.filter((m) => m.session_id !== sessao.id), ...novas],
-    });
-    setMensagens(novas);
+  function enviar() {
+    if (!sessao || !texto.trim() || pensando) return;
+    adicionarMensagem(sessao.id, "user", texto.trim());
+    const atualizadas = listarMensagens(sessao.id);
+    setMensagens(atualizadas);
     setTexto("");
+    setPensando(true);
+
+    setTimeout(() => {
+      const prox = proximaPergunta(sessao.category, sessao.topic, atualizadas);
+      adicionarMensagem(sessao.id, "assistant", prox.pergunta);
+      setMensagens(listarMensagens(sessao.id));
+      setPensando(false);
+      if (prox.oferecerGuia) setOferta(true);
+    }, 900);
   }
 
-  function gerar() {
+  function criarGuia() {
     if (!sessao) return;
-    const store = loadStore();
-    const artigo = gerarArtigo(sessao, mensagens, store.profile?.name ?? "Você");
-    saveStore({
-      articles: [artigo, ...store.articles],
-      sessions: store.sessions.map((s) =>
-        s.id === sessao.id ? { ...s, status: "concluida" as const } : s,
-      ),
-    });
-    navigate({ to: "/conhecimento/$id", params: { id: artigo.id } });
-  }
-
-  if (pronta && !sessao) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <SiteHeader />
-        <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-          <h1 className="text-3xl font-semibold">Não encontramos essa conversa</h1>
-          <Link
-            to="/nova"
-            search={{}}
-            className="mt-6 inline-block rounded-2xl bg-primary px-8 py-4 text-xl font-bold text-primary-foreground"
-          >
-            Começar uma nova
-          </Link>
-        </div>
-      </div>
+    const perfil = getPerfil();
+    const artigo = gerarGuia(
+      sessao,
+      listarMensagens(sessao.id),
+      perfil?.name ?? "Você",
+      perfil?.id ?? null,
     );
+    salvarArtigo(artigo);
+    atualizarStatusSessao(sessao.id, "completed");
+    void navigate({ to: "/guia/$id", params: { id: artigo.id }, search: { novo: true } });
   }
-
-  const cat = sessao ? getCategoria(sessao.category) : null;
 
   return (
-    <div className="flex min-h-screen flex-col bg-sand">
-      <SiteHeader />
-
-      <div className="border-b border-border/70 bg-background">
-        <div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-4 sm:px-6">
-          <div className="min-w-0">
-            <p className="truncate text-xl font-bold">
-              {cat?.emoji} {sessao?.topic}
-            </p>
-            <p className="text-base text-muted-foreground">{cat?.nome}</p>
+    <div className="flex min-h-screen flex-col bg-surface">
+      <header className="sticky top-0 z-20 border-b border-border bg-background">
+        <div className="mx-auto flex h-16 w-full max-w-2xl items-center gap-3 px-3">
+          <Link
+            to="/"
+            aria-label="Voltar para o início"
+            className="flex size-11 items-center justify-center rounded-full text-foreground hover:bg-muted"
+          >
+            <ArrowLeft className="size-5" aria-hidden="true" />
+          </Link>
+          <div className="flex-1">
+            <p className="font-display text-lg font-extrabold leading-tight">Memória Viva</p>
+            <p className="text-sm text-muted-foreground">Registrando sua experiência</p>
           </div>
-          <p className="shrink-0 text-lg font-semibold text-primary">
-            {feitas} de {total}
-          </p>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-11" aria-label="Como funciona">
+                <Info className="size-5" aria-hidden="true" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Como funciona esta conversa</DialogTitle>
+                <DialogDescription className="text-base">
+                  Fazemos uma pergunta por vez sobre a sua experiência. Responda com suas palavras,
+                  sem pressa. Quando quiser, você pode encerrar e criar o seu guia.
+                </DialogDescription>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
         </div>
-        <div className="h-2 w-full bg-secondary">
-          <div
-            className="h-2 bg-primary transition-all"
-            style={{ width: `${(feitas / total) * 100}%` }}
-          />
-        </div>
-      </div>
+      </header>
 
-      <main className="flex-1">
-        <div className="mx-auto max-w-3xl space-y-5 px-4 py-8 sm:px-6">
-          {mensagens.map((m) => (
-            <div
-              key={m.id}
-              className={m.role === "user" ? "flex justify-end" : "flex justify-start"}
-            >
-              <div
-                className={`max-w-[90%] rounded-3xl px-6 py-5 text-xl leading-relaxed shadow-sm sm:max-w-[80%] ${
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border bg-card text-card-foreground"
-                }`}
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-5">
+        <p
+          className="mb-4 rounded-full bg-accent-soft px-4 py-2 text-center text-sm font-semibold text-accent-foreground"
+          aria-live="polite"
+        >
+          {mensagemProgresso(Math.max(0, respostas))}
+        </p>
+
+        <ul className="space-y-4">
+          {mensagens.map((m, i) =>
+            i === 0 ? null : (
+              <li
+                key={m.id}
+                className={m.role === "user" ? "flex justify-end" : "flex items-start gap-3"}
               >
                 {m.role === "assistant" && (
-                  <p className="mb-1 text-base font-bold uppercase tracking-wide text-primary">
-                    Entrevistadora
-                  </p>
+                  <span className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft">
+                    <LogoIcone size={20} className="text-primary" />
+                  </span>
                 )}
-                <p className="whitespace-pre-wrap">{m.content}</p>
-              </div>
+                <p
+                  className={`max-w-[85%] rounded-3xl px-5 py-4 text-lg leading-relaxed ${
+                    m.role === "user"
+                      ? "rounded-br-lg bg-primary text-primary-foreground"
+                      : "rounded-bl-lg border border-border bg-card text-card-foreground"
+                  }`}
+                >
+                  {m.content}
+                </p>
+              </li>
+            ),
+          )}
+
+          {pensando && (
+            <li className="flex items-center gap-3 text-muted-foreground" aria-live="polite">
+              <span className="flex size-9 items-center justify-center rounded-full bg-primary-soft">
+                <LogoIcone size={20} className="mv-pulso text-primary" />
+              </span>
+              <span className="text-base">Pensando na próxima pergunta…</span>
+            </li>
+          )}
+        </ul>
+
+        {oferta && (
+          <section className="mv-entrada mt-6 rounded-3xl border-2 border-primary bg-card p-6">
+            <h2 className="text-2xl">Estamos aprendendo muito com sua experiência.</h2>
+            <p className="mt-2 text-base text-muted-foreground">
+              Já reunimos bastante informação para criar um guia organizado baseado no que você
+              compartilhou.
+            </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row-reverse">
+              <Button
+                onClick={criarGuia}
+                size="lg"
+                className="h-14 flex-1 rounded-2xl text-lg font-bold"
+              >
+                Criar meu guia
+              </Button>
+              <Button
+                onClick={() => setOferta(false)}
+                variant="outline"
+                size="lg"
+                className="h-14 flex-1 rounded-2xl text-lg"
+              >
+                Continuar conversando
+              </Button>
             </div>
-          ))}
-          <div ref={fim} />
-        </div>
+          </section>
+        )}
+
+        <div ref={fim} />
       </main>
 
       <div className="sticky bottom-0 border-t border-border bg-background">
-        <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
-          {concluida ? (
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={gerar}
-                className="w-full rounded-2xl bg-primary px-8 py-5 text-xl font-bold text-primary-foreground shadow-lg"
-              >
-                Gerar conhecimento organizado
-              </button>
-              <p className="text-center text-base text-muted-foreground">
-                Você ainda pode responder mais, se quiser acrescentar algo.
-              </p>
-            </div>
-          ) : null}
-          <form onSubmit={enviar} className="mt-3 space-y-3">
-            <label htmlFor="resposta" className="sr-only">
-              Sua resposta
-            </label>
-            <textarea
-              id="resposta"
-              rows={3}
+        <div className="mx-auto w-full max-w-2xl px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="flex items-end gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="size-12 shrink-0 rounded-2xl"
+                  aria-label="Outras formas de responder"
+                >
+                  <Plus className="size-5" aria-hidden="true" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Em breve</DialogTitle>
+                  <DialogDescription className="text-base">
+                    Você poderá responder por voz, enviar fotos e anexar documentos. Por enquanto,
+                    conte com suas palavras escritas.
+                  </DialogDescription>
+                </DialogHeader>
+              </DialogContent>
+            </Dialog>
+
+            <Textarea
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              placeholder="Escreva sua resposta aqui, com calma..."
-              className="w-full resize-none rounded-2xl border-2 border-input bg-background px-5 py-4 text-xl leading-relaxed"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  enviar();
+                }
+              }}
+              placeholder="Conte com suas palavras…"
+              aria-label="Sua resposta"
+              className="min-h-12 flex-1 resize-none rounded-2xl text-lg"
+              rows={1}
             />
-            <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)]">
-              <button
-                type="button"
-                disabled
-                title="Em breve: responder falando"
-                className="rounded-2xl border-2 border-dashed border-border px-5 py-4 text-lg font-semibold text-muted-foreground"
-              >
-                🎤 Falar (em breve)
-              </button>
-              <button
-                type="submit"
-                disabled={!texto.trim()}
-                className="rounded-2xl bg-primary px-8 py-4 text-xl font-bold text-primary-foreground disabled:opacity-40"
-              >
-                Enviar resposta
-              </button>
-            </div>
-          </form>
+
+            <Button
+              onClick={enviar}
+              disabled={!texto.trim() || pensando}
+              size="icon"
+              className="size-12 shrink-0 rounded-2xl"
+              aria-label="Enviar resposta"
+            >
+              <Send className="size-5" aria-hidden="true" />
+            </Button>
+          </div>
+
+          {respostas >= MIN_PERGUNTAS && !oferta && (
+            <button
+              type="button"
+              onClick={criarGuia}
+              className="mt-3 w-full rounded-2xl py-2 text-base font-bold text-primary underline-offset-4 hover:underline"
+            >
+              Encerrar e criar meu guia
+            </button>
+          )}
         </div>
       </div>
     </div>
