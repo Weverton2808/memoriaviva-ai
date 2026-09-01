@@ -209,18 +209,21 @@ export const generateNextQuestion = createServerFn({ method: "POST" })
     const supabase = context.supabase as Cliente;
     const { sessao, mensagens } = await carregarContexto(supabase, data.sessionId);
 
-    const chave = process.env["LOVABLE_API_KEY"];
+    // O modo demonstração só existe quando MODO_IA=demo é definido de propósito.
+    // Fora dele, a ausência da chave é erro de configuração, não fallback.
+    const demo = modoDemo();
+    const chave = demo ? "" : chaveObrigatoria();
     let pergunta = "";
     const respostas = mensagens.filter((m) => m.role === "user").length;
 
     // A partir do mínimo de respostas, a camada de qualidade decide se já dá
     // para gerar o guia e aponta o que ainda falta perguntar.
     let analise: AnaliseConhecimento | null = null;
-    if (!modoDemo() && chave && respostas >= 8) {
+    if (!demo && respostas >= 8) {
       analise = await analisarConversa(sessao, mensagens, chave);
     }
 
-    if (!modoDemo() && chave) {
+    if (!demo) {
       try {
         const system = montarSystemPrompt(
           sessao.category as CategoriaId,
