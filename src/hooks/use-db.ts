@@ -12,7 +12,10 @@ export function useDb<T>(seletor: () => T, inicial: T): T {
 
   useEffect(() => {
     setValor(seletor());
-    return inscrever(() => setValor(seletor()));
+    const cancelar = inscrever(() => setValor(seletor()));
+    return () => {
+      cancelar();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
