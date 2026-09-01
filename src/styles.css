@@ -6,20 +6,20 @@
 
 /*
  * Memória Viva — design system.
- * Paleta quente (terracota, âmbar, creme) com alto contraste e tipografia grande,
- * pensada para leitura confortável por pessoas idosas.
+ * Roxo profundo (marca) + laranja suave (toque humano) sobre fundo claro.
+ * Tipografia grande, alto contraste e áreas de toque generosas para que
+ * pessoas com pouca experiência tecnológica usem o aplicativo com conforto.
  */
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
-  --font-display: "Fraunces", Georgia, serif;
-  --font-sans: "Nunito Sans", system-ui, sans-serif;
+  --radius-2xl: calc(var(--radius) + 10px);
+  --radius-3xl: calc(var(--radius) + 16px);
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -28,20 +28,21 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ring-offset-background: var(--background);
-  --color-sand: var(--sand);
-  --color-ink: var(--ink);
+  --color-surface: var(--surface);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -58,73 +59,75 @@
 }
 
 :root {
-  --radius: 1rem;
-  --background: oklch(0.982 0.014 85);
-  --foreground: oklch(0.245 0.03 45);
-  --sand: oklch(0.945 0.026 80);
-  --ink: oklch(0.245 0.03 45);
-  --card: oklch(0.995 0.008 85);
-  --card-foreground: oklch(0.245 0.03 45);
-  --popover: oklch(0.995 0.008 85);
-  --popover-foreground: oklch(0.245 0.03 45);
-  --primary: oklch(0.52 0.15 38);
-  --primary-foreground: oklch(0.99 0.01 85);
-  --secondary: oklch(0.93 0.035 80);
-  --secondary-foreground: oklch(0.32 0.05 45);
-  --muted: oklch(0.945 0.022 82);
-  --muted-foreground: oklch(0.47 0.03 55);
-  --accent: oklch(0.86 0.09 78);
-  --accent-foreground: oklch(0.28 0.05 45);
-  --destructive: oklch(0.52 0.19 25);
-  --destructive-foreground: oklch(0.99 0.01 85);
-  --border: oklch(0.88 0.025 75);
-  --input: oklch(0.88 0.025 75);
-  --ring: oklch(0.52 0.15 38);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.96 0.02 82);
-  --sidebar-foreground: oklch(0.245 0.03 45);
-  --sidebar-primary: oklch(0.52 0.15 38);
-  --sidebar-primary-foreground: oklch(0.99 0.01 85);
-  --sidebar-accent: oklch(0.9 0.04 80);
-  --sidebar-accent-foreground: oklch(0.28 0.05 45);
-  --sidebar-border: oklch(0.88 0.025 75);
-  --sidebar-ring: oklch(0.52 0.15 38);
+  --radius: 1.1rem;
+  --background: oklch(0.995 0.002 300);
+  --foreground: oklch(0.22 0.03 295);
+  --surface: oklch(0.972 0.005 300);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.03 295);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.03 295);
+  --primary: oklch(0.44 0.18 295);
+  --primary-foreground: oklch(0.99 0.005 300);
+  --primary-soft: oklch(0.95 0.028 300);
+  --secondary: oklch(0.96 0.008 300);
+  --secondary-foreground: oklch(0.3 0.04 295);
+  --muted: oklch(0.965 0.006 300);
+  --muted-foreground: oklch(0.47 0.02 295);
+  --accent: oklch(0.74 0.14 55);
+  --accent-foreground: oklch(0.26 0.06 45);
+  --accent-soft: oklch(0.96 0.03 65);
+  --destructive: oklch(0.55 0.19 25);
+  --destructive-foreground: oklch(0.99 0.005 300);
+  --border: oklch(0.9 0.008 300);
+  --input: oklch(0.89 0.01 300);
+  --ring: oklch(0.44 0.18 295);
+  --chart-1: oklch(0.44 0.18 295);
+  --chart-2: oklch(0.74 0.14 55);
+  --chart-3: oklch(0.6 0.12 300);
+  --chart-4: oklch(0.82 0.09 60);
+  --chart-5: oklch(0.55 0.08 295);
+  --sidebar: oklch(0.972 0.005 300);
+  --sidebar-foreground: oklch(0.22 0.03 295);
+  --sidebar-primary: oklch(0.44 0.18 295);
+  --sidebar-primary-foreground: oklch(0.99 0.005 300);
+  --sidebar-accent: oklch(0.95 0.028 300);
+  --sidebar-accent-foreground: oklch(0.3 0.04 295);
+  --sidebar-border: oklch(0.9 0.008 300);
+  --sidebar-ring: oklch(0.44 0.18 295);
 }
 
 .dark {
-  --background: oklch(0.19 0.02 55);
-  --foreground: oklch(0.96 0.012 85);
-  --sand: oklch(0.26 0.025 55);
-  --ink: oklch(0.96 0.012 85);
-  --card: oklch(0.24 0.024 55);
-  --card-foreground: oklch(0.96 0.012 85);
-  --popover: oklch(0.24 0.024 55);
-  --popover-foreground: oklch(0.96 0.012 85);
-  --primary: oklch(0.74 0.13 55);
-  --primary-foreground: oklch(0.2 0.03 45);
-  --secondary: oklch(0.3 0.03 55);
-  --secondary-foreground: oklch(0.96 0.012 85);
-  --muted: oklch(0.29 0.025 55);
-  --muted-foreground: oklch(0.78 0.02 75);
-  --accent: oklch(0.36 0.05 60);
-  --accent-foreground: oklch(0.96 0.012 85);
+  --background: oklch(0.18 0.02 295);
+  --foreground: oklch(0.97 0.005 300);
+  --surface: oklch(0.22 0.025 295);
+  --card: oklch(0.23 0.025 295);
+  --card-foreground: oklch(0.97 0.005 300);
+  --popover: oklch(0.23 0.025 295);
+  --popover-foreground: oklch(0.97 0.005 300);
+  --primary: oklch(0.72 0.14 295);
+  --primary-foreground: oklch(0.18 0.03 295);
+  --primary-soft: oklch(0.3 0.05 295);
+  --secondary: oklch(0.28 0.03 295);
+  --secondary-foreground: oklch(0.97 0.005 300);
+  --muted: oklch(0.27 0.025 295);
+  --muted-foreground: oklch(0.78 0.015 300);
+  --accent: oklch(0.78 0.13 60);
+  --accent-foreground: oklch(0.2 0.04 45);
+  --accent-soft: oklch(0.32 0.05 60);
   --destructive: oklch(0.62 0.18 25);
-  --destructive-foreground: oklch(0.98 0.01 85);
+  --destructive-foreground: oklch(0.98 0.005 300);
   --border: oklch(1 0 0 / 14%);
   --input: oklch(1 0 0 / 18%);
-  --ring: oklch(0.74 0.13 55);
-  --sidebar: oklch(0.24 0.024 55);
-  --sidebar-foreground: oklch(0.96 0.012 85);
-  --sidebar-primary: oklch(0.74 0.13 55);
-  --sidebar-primary-foreground: oklch(0.2 0.03 45);
-  --sidebar-accent: oklch(0.3 0.03 55);
-  --sidebar-accent-foreground: oklch(0.96 0.012 85);
+  --ring: oklch(0.72 0.14 295);
+  --sidebar: oklch(0.22 0.025 295);
+  --sidebar-foreground: oklch(0.97 0.005 300);
+  --sidebar-primary: oklch(0.72 0.14 295);
+  --sidebar-primary-foreground: oklch(0.18 0.03 295);
+  --sidebar-accent: oklch(0.3 0.05 295);
+  --sidebar-accent-foreground: oklch(0.97 0.005 300);
   --sidebar-border: oklch(1 0 0 / 14%);
-  --sidebar-ring: oklch(0.74 0.13 55);
+  --sidebar-ring: oklch(0.72 0.14 295);
 }
 
 @layer base {
@@ -140,15 +143,17 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-size: 1.125rem;
-    line-height: 1.7;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1,
   h2,
   h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    font-weight: 700;
   }
 
   :focus-visible {
@@ -157,11 +162,37 @@
   }
 }
 
-@utility paper {
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    color-mix(in oklab, var(--color-primary) 9%, transparent) 1px,
-    transparent 0
-  );
-  background-size: 22px 22px;
+@utility tap {
+  min-height: 3rem;
+}
+
+@keyframes mv-suave {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility mv-entrada {
+  animation: mv-suave 0.45s ease-out both;
+}
+
+@keyframes mv-pulso {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.85;
+  }
+}
+
+@utility mv-pulso {
+  animation: mv-pulso 2s ease-in-out infinite;
 }
