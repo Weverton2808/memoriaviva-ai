@@ -20,28 +20,31 @@ export const Route = createFileRoute("/criar/preparando")({
 
 function Preparando() {
   const navigate = useNavigate();
-  const iniciado = useRef(false);
+  const sessaoRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (iniciado.current) return;
-    iniciado.current = true;
-
     const { categoria, descricao } = lerRascunho();
     if (!categoria || !descricao) {
       void navigate({ to: "/criar" });
       return;
     }
 
-    const sessao = criarSessao(categoria, descricao);
-    adicionarMensagem(sessao.id, "user", descricao);
-    const primeira = proximaPergunta(categoria, descricao, []);
-    adicionarMensagem(sessao.id, "assistant", primeira.pergunta);
+    // Cria a sessão apenas uma vez (o React monta duas vezes em desenvolvimento).
+    if (!sessaoRef.current) {
+      const sessao = criarSessao(categoria, descricao);
+      adicionarMensagem(sessao.id, "user", descricao);
+      const primeira = proximaPergunta(categoria, descricao, []);
+      adicionarMensagem(sessao.id, "assistant", primeira.pergunta);
+      sessaoRef.current = sessao.id;
+    }
 
+    const id = sessaoRef.current;
     const t = setTimeout(() => {
-      void navigate({ to: "/conversa/$id", params: { id: sessao.id } });
+      void navigate({ to: "/conversa/$id", params: { id } });
     }, 1800);
     return () => clearTimeout(t);
   }, [navigate]);
+
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
