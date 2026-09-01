@@ -15,6 +15,7 @@ import { Route as ExplorarRouteImport } from './routes/explorar'
 import { Route as NovaRouteImport } from './routes/nova'
 import { Route as ConhecimentoIdRouteImport } from './routes/conhecimento.$id'
 import { Route as ConversaIdRouteImport } from './routes/conversa.$id'
+import { Route as CriarIndexRouteImport } from './routes/criar.index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +47,11 @@ const ConversaIdRoute = ConversaIdRouteImport.update({
   path: '/conversa/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CriarIndexRoute = CriarIndexRouteImport.update({
+  id: '/criar/',
+  path: '/criar/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/nova': typeof NovaRoute
   '/conhecimento/$id': typeof ConhecimentoIdRoute
   '/conversa/$id': typeof ConversaIdRoute
+  '/criar/': typeof CriarIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/nova': typeof NovaRoute
   '/conhecimento/$id': typeof ConhecimentoIdRoute
   '/conversa/$id': typeof ConversaIdRoute
+  '/criar': typeof CriarIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/nova': typeof NovaRoute
   '/conhecimento/$id': typeof ConhecimentoIdRoute
   '/conversa/$id': typeof ConversaIdRoute
+  '/criar/': typeof CriarIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/nova'
     | '/conhecimento/$id'
     | '/conversa/$id'
+    | '/criar/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/nova'
     | '/conhecimento/$id'
     | '/conversa/$id'
+    | '/criar'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/nova'
     | '/conhecimento/$id'
     | '/conversa/$id'
+    | '/criar/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   NovaRoute: typeof NovaRoute
   ConhecimentoIdRoute: typeof ConhecimentoIdRoute
   ConversaIdRoute: typeof ConversaIdRoute
+  CriarIndexRoute: typeof CriarIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -152,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConversaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/criar/': {
+      id: '/criar/'
+      path: '/criar'
+      fullPath: '/criar/'
+      preLoaderRoute: typeof CriarIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   NovaRoute: NovaRoute,
   ConhecimentoIdRoute: ConhecimentoIdRoute,
   ConversaIdRoute: ConversaIdRoute,
+  CriarIndexRoute: CriarIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
