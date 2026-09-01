@@ -196,3 +196,8 @@
 @utility mv-pulso {
   animation: mv-pulso 2s ease-in-out infinite;
 }
+
+/* Preferência de leitura ampliada (configurações). */
+html.mv-letra-grande {
+  font-size: 118%;
+}
