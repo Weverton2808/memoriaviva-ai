@@ -1,10 +1,13 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { salvarPerfil } from "@/services/db";
+import { useAuth } from "@/hooks/use-auth";
+import { ERROS, mensagemDeErro } from "@/lib/erros";
+import { cadastrar, entrar, entrarComGoogle, recuperarSenha } from "@/services/authService";
 
 export const Route = createFileRoute("/entrar")({
   head: () => ({
@@ -27,24 +30,72 @@ export const Route = createFileRoute("/entrar")({
 
 function Entrar() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [modo, setModo] = useState<"entrar" | "cadastrar">("cadastrar");
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
-  function enviar(e: React.FormEvent) {
+  // Quem já está com a conta aberta segue direto para criar.
+  useEffect(() => {
+    if (user) void navigate({ to: "/criar" });
+  }, [user, navigate]);
+
+  async function enviar(e: React.FormEvent) {
     e.preventDefault();
+    setErro("");
+
     if (!email.includes("@") || senha.length < 6) {
       setErro("Confira o e-mail e use uma senha com pelo menos 6 letras ou números.");
       return;
     }
-    // Preparado para Supabase Auth:
-    // modo === "cadastrar"
-    //   ? supabase.auth.signUp({ email, password: senha, options: { data: { name: nome } } })
-    //   : supabase.auth.signInWithPassword({ email, password: senha })
-    salvarPerfil(nome.trim() || "Você");
-    void navigate({ to: "/criar" });
+    if (modo === "cadastrar" && nome.trim().length < 2) {
+      setErro("Diga como podemos te chamar.");
+      return;
+    }
+
+    setEnviando(true);
+    try {
+      if (modo === "cadastrar") {
+        const dados = await cadastrar(email.trim(), senha, nome.trim());
+        if (!dados.session) {
+          toast.success("Conta criada! Confirme seu e-mail para entrar.");
+          setModo("entrar");
+          return;
+        }
+      } else {
+        await entrar(email.trim(), senha);
+      }
+      void navigate({ to: "/criar" });
+    } catch (e2) {
+      setErro(mensagemDeErro(e2, ERROS.entrar));
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function comGoogle() {
+    setErro("");
+    try {
+      await entrarComGoogle();
+    } catch (e2) {
+      setErro(mensagemDeErro(e2, "Não conseguimos entrar com o Google agora."));
+    }
+  }
+
+  async function esqueci() {
+    if (!email.includes("@")) {
+      setErro("Escreva seu e-mail para receber o link de recuperação.");
+      return;
+    }
+    try {
+      await recuperarSenha(email.trim());
+      toast.success("Enviamos um link de recuperação para o seu e-mail.");
+    } catch (e2) {
+      setErro(mensagemDeErro(e2, ERROS.conexao));
+    }
   }
 
   return (
@@ -73,7 +124,19 @@ function Entrar() {
           ))}
         </div>
 
-        <form onSubmit={enviar} className="mt-8 space-y-5">
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={() => void comGoogle()}
+          className="mt-6 h-14 w-full rounded-2xl text-lg font-bold"
+        >
+          Entrar com o Google
+        </Button>
+
+        <p className="mt-4 text-center text-base text-muted-foreground">ou use seu e-mail</p>
+
+        <form onSubmit={(e) => void enviar(e)} className="mt-4 space-y-5">
           {modo === "cadastrar" && (
             <div>
               <label htmlFor="nome" className="block text-lg font-semibold">
@@ -123,15 +186,26 @@ function Entrar() {
             </p>
           )}
 
-          <Button type="submit" size="lg" className="h-14 w-full rounded-2xl text-lg font-bold">
-            {modo === "entrar" ? "Entrar" : "Criar conta"}
+          <Button
+            type="submit"
+            size="lg"
+            disabled={enviando}
+            className="h-14 w-full rounded-2xl text-lg font-bold"
+          >
+            {enviando ? "Um instante…" : modo === "entrar" ? "Entrar" : "Criar conta"}
           </Button>
         </form>
 
-        <p className="mt-6 text-base text-muted-foreground">
-          Estrutura pronta para contas reais: ao ligar o backend, este formulário passa a usar login
-          com e-mail, senha e recuperação por e-mail.
-        </p>
+        {modo === "entrar" && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="mt-4 h-12 w-full rounded-2xl text-base"
+            onClick={() => void esqueci()}
+          >
+            Esqueci minha senha
+          </Button>
+        )}
       </div>
     </AppShell>
   );
