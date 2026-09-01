@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
+import { Protegido } from "@/components/protegido";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { usePerfil } from "@/hooks/use-db";
-import { sair, salvarPerfil } from "@/services/db";
+import { useAuth } from "@/hooks/use-auth";
+import { mensagemDeErro } from "@/lib/erros";
+import { atualizarPerfil, sair } from "@/services/authService";
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({
@@ -18,21 +20,40 @@ export const Route = createFileRoute("/configuracoes")({
       { property: "og:description", content: "Preferências da sua conta no Memória Viva." },
     ],
   }),
-  component: Configuracoes,
+  component: () => (
+    <Protegido>
+      <Configuracoes />
+    </Protegido>
+  ),
 });
 
 function Configuracoes() {
-  const perfil = usePerfil();
+  const { user, profile, recarregarPerfil } = useAuth();
   const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [letraGrande, setLetraGrande] = useState(false);
+  const [salvando, setSalvando] = useState(false);
 
-  useEffect(() => setNome(perfil?.name ?? ""), [perfil?.name]);
+  useEffect(() => setNome(profile?.name ?? ""), [profile?.name]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.classList.toggle("mv-letra-grande", letraGrande);
   }, [letraGrande]);
+
+  async function salvar() {
+    if (!user) return;
+    setSalvando(true);
+    try {
+      await atualizarPerfil(user.id, { name: nome.trim() || "Você" });
+      await recarregarPerfil();
+      toast.success("Nome atualizado.");
+    } catch (e) {
+      toast.error(mensagemDeErro(e));
+    } finally {
+      setSalvando(false);
+    }
+  }
 
   return (
     <AppShell>
@@ -49,14 +70,13 @@ function Configuracoes() {
           onChange={(e) => setNome(e.target.value)}
           className="mt-2 h-14 rounded-2xl text-lg"
         />
+        <p className="mt-3 text-base text-muted-foreground">{user?.email}</p>
         <Button
           className="mt-4 h-14 w-full rounded-2xl text-lg font-bold"
-          onClick={() => {
-            salvarPerfil(nome.trim() || "Você", perfil?.avatar_url ?? null);
-            toast.success("Nome atualizado.");
-          }}
+          disabled={salvando}
+          onClick={() => void salvar()}
         >
-          Salvar
+          {salvando ? "Salvando…" : "Salvar"}
         </Button>
       </section>
 
@@ -81,9 +101,15 @@ function Configuracoes() {
           variant="outline"
           className="mt-4 h-14 w-full rounded-2xl text-lg text-destructive"
           onClick={() => {
-            sair();
-            toast.success("Você saiu da sua conta.");
-            void navigate({ to: "/" });
+            void (async () => {
+              try {
+                await sair();
+                toast.success("Você saiu da sua conta.");
+                void navigate({ to: "/" });
+              } catch (e) {
+                toast.error(mensagemDeErro(e));
+              }
+            })();
           }}
         >
           <LogOut className="size-5" aria-hidden="true" />
