@@ -318,13 +318,14 @@ export const generateKnowledgeGuide = createServerFn({ method: "POST" })
       .maybeSingle();
     const autor = (perfil as { name?: string } | null)?.name ?? "Você";
 
-    const chave = process.env["LOVABLE_API_KEY"];
+    const demo = modoDemo();
+    const chave = demo ? "" : chaveObrigatoria();
     let title = "";
     let summary = "";
     let content: Secao[] = [];
     let analise: AnaliseConhecimento | null = null;
 
-    if (!modoDemo() && chave) {
+    if (!demo) {
       try {
         const transcricao = transcrever(mensagens);
         analise = await analisarConversa(sessao, mensagens, chave);
