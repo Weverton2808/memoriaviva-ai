@@ -17,6 +17,44 @@ USUÁRIO → MEMÓRIA VIVA → SUPABASE → LOGIN / BANCO / CONVERSAS / CONHECIM
   - `created_at` (timestamptz)
 - O schema existente será ajustado: renomear `full_name` para `name` e remover `display_age`/`city` para bater com a estrutura acima.
 
+## Schema final do banco
+
+```sql
+public.users
+  id uuid pk -> auth.users(id)
+  name text not null
+  avatar_url text
+  created_at timestamptz default now()
+
+public.knowledge_sessions
+  id uuid pk default gen_random_uuid()
+  user_id uuid -> auth.users(id)
+  category knowledge_category not null
+  topic text not null
+  status session_status default 'em_andamento'
+  created_at timestamptz default now()
+
+public.messages
+  id uuid pk default gen_random_uuid()
+  session_id uuid -> knowledge_sessions(id)
+  role message_role not null
+  content text not null
+  created_at timestamptz default now()
+
+public.knowledge_articles
+  id uuid pk default gen_random_uuid()
+  session_id uuid -> knowledge_sessions(id)
+  user_id uuid -> auth.users(id)
+  title text not null
+  category knowledge_category not null
+  topic text not null
+  summary text
+  sections jsonb
+  tags text[]
+  is_public boolean default true
+  created_at timestamptz default now()
+```
+
 ## Etapas
 
 ### 1. Ativar Lovable Cloud (Supabase)
