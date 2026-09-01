@@ -32,7 +32,7 @@ export function registrarEvento(
   dados?: Record<string, string | number | boolean>,
 ): void {
   if (typeof window === "undefined") return;
-  const item: EventoRegistrado = { evento, dados, em: new Date().toISOString() };
+  const item: EventoRegistrado = { evento, em: new Date().toISOString(), ...(dados ? { dados } : {}) };
   try {
     const atuais = eventosRegistrados();
     localStorage.setItem(CHAVE, JSON.stringify([...atuais, item].slice(-LIMITE)));
