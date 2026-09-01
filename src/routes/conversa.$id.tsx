@@ -19,6 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { ERROS, mensagemDeErro } from "@/lib/erros";
 import { generateKnowledgeGuide, generateNextQuestion } from "@/services/aiService";
+import { registrarEvento } from "@/services/analytics";
 import { mensagemProgresso } from "@/services/entrevista";
 import { getSessao } from "@/services/knowledgeService";
 import { adicionarMensagem, listarMensagens } from "@/services/messageService";
@@ -41,6 +42,18 @@ export const Route = createFileRoute("/conversa/$id")({
     </Protegido>
   ),
 });
+
+// Incentivos discretos: aparecem de vez em quando, nunca a cada resposta.
+const INCENTIVOS = [
+  "Isso está ficando muito interessante.",
+  "Você compartilhou um detalhe importante.",
+  "Esse tipo de experiência pode ajudar muita gente.",
+];
+
+function incentivoPara(respostas: number): string | null {
+  if (respostas < 3 || respostas % 3 !== 0) return null;
+  return INCENTIVOS[(respostas / 3 - 1) % INCENTIVOS.length] ?? null;
+}
 
 function Conversa() {
   const { id } = Route.useParams();
@@ -74,15 +87,20 @@ function Conversa() {
     },
     onSuccess: async (r) => {
       await queryClient.invalidateQueries({ queryKey: ["mensagens", id] });
+      registrarEvento("message_sent");
       if (r.oferecerGuia) setOferta(true);
     },
     onError: (e) => toast.error(mensagemDeErro(e, ERROS.ia)),
   });
 
   const criarGuia = useMutation({
-    mutationFn: () => gerarGuiaFn({ data: { sessionId: id } }),
+    mutationFn: () => {
+      registrarEvento("guide_generation_started");
+      return gerarGuiaFn({ data: { sessionId: id } });
+    },
     onSuccess: (r) => {
       // Avisos da checagem de qualidade (privacidade, pontos a esclarecer).
+      registrarEvento("guide_generated");
       for (const aviso of r.avisos ?? []) toast.info(aviso, { duration: 8000 });
       navigate({ to: "/guia/$id", params: { id: r.articleId }, search: { novo: true } });
     },
@@ -97,6 +115,7 @@ function Conversa() {
 
   // A primeira mensagem é a descrição inicial; ela não conta como resposta da entrevista.
   const respostas = lista.filter((m) => m.role === "user").length - 1;
+  const incentivo = incentivoPara(Math.max(0, respostas));
 
   function enviar() {
     const valor = texto.trim();
@@ -120,6 +139,15 @@ function Conversa() {
             <p className="font-display text-lg font-extrabold leading-tight">Memória Viva</p>
             <p className="text-sm text-muted-foreground">Registrando sua experiência</p>
           </div>
+          {respostas >= 3 && !oferta && (
+            <Button
+              variant="outline"
+              onClick={() => setOferta(true)}
+              className="h-11 rounded-2xl text-base font-semibold"
+            >
+              Criar guia
+            </Button>
+          )}
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon" className="size-11" aria-label="Como funciona">
@@ -176,7 +204,15 @@ function Conversa() {
             ),
           )}
 
-          {pensando && (
+          {incentivo && !pensando && (
+          <li className="mv-entrada flex justify-center">
+            <p className="rounded-full bg-accent-soft px-4 py-2 text-center text-base font-semibold text-accent-foreground">
+              {incentivo}
+            </p>
+          </li>
+        )}
+
+        {pensando && (
             <li className="flex items-center gap-3 text-muted-foreground" aria-live="polite">
               <span className="flex size-9 items-center justify-center rounded-full bg-primary-soft">
                 <LogoIcone size={20} className="mv-pulso text-primary" />
@@ -188,10 +224,10 @@ function Conversa() {
 
         {oferta && (
           <section className="mv-entrada mt-6 rounded-3xl border-2 border-primary bg-card p-6">
-            <h2 className="text-2xl">Estamos aprendendo muito com sua experiência.</h2>
+            <h2 className="text-2xl">Já temos bastante informação.</h2>
             <p className="mt-2 text-base text-muted-foreground">
-              Já reunimos bastante informação para criar um guia organizado baseado no que você
-              compartilhou.
+              Você decide: podemos continuar conversando para aprofundar, ou transformar agora o que
+              você contou em um guia. Dá para editar tudo depois.
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row-reverse">
               <Button
