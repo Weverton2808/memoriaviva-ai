@@ -34,7 +34,7 @@ function EscolherCategoria() {
 
   useEffect(() => {
     const r = lerRascunho();
-    setSelecionada(r.categoria);
+    if (r.categoria) setSelecionada(r.categoria);
   }, []);
 
   function continuar() {
