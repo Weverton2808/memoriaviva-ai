@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ExplorarRouteImport } from './routes/explorar'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as ConversaIdRouteImport } from './routes/conversa.$id'
 import { Route as CriarIndexRouteImport } from './routes/criar.index'
 import { Route as CriarDescreverRouteImport } from './routes/criar.descrever'
@@ -32,6 +33,11 @@ const EntrarRoute = EntrarRouteImport.update({
 const ExplorarRoute = ExplorarRouteImport.update({
   id: '/explorar',
   path: '/explorar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConversaIdRoute = ConversaIdRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/entrar': typeof EntrarRoute
   '/explorar': typeof ExplorarRoute
+  '/perfil': typeof PerfilRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/entrar': typeof EntrarRoute
   '/explorar': typeof ExplorarRoute
+  '/perfil': typeof PerfilRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/entrar': typeof EntrarRoute
   '/explorar': typeof ExplorarRoute
+  '/perfil': typeof PerfilRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/entrar'
     | '/explorar'
+    | '/perfil'
     | '/conversa/$id'
     | '/criar/descrever'
     | '/criar/preparando'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/entrar'
     | '/explorar'
+    | '/perfil'
     | '/conversa/$id'
     | '/criar/descrever'
     | '/criar/preparando'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/entrar'
     | '/explorar'
+    | '/perfil'
     | '/conversa/$id'
     | '/criar/descrever'
     | '/criar/preparando'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EntrarRoute: typeof EntrarRoute
   ExplorarRoute: typeof ExplorarRoute
+  PerfilRoute: typeof PerfilRoute
   ConversaIdRoute: typeof ConversaIdRoute
   CriarDescreverRoute: typeof CriarDescreverRoute
   CriarPreparandoRoute: typeof CriarPreparandoRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/explorar'
       fullPath: '/explorar'
       preLoaderRoute: typeof ExplorarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conversa/$id': {
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EntrarRoute: EntrarRoute,
   ExplorarRoute: ExplorarRoute,
+  PerfilRoute: PerfilRoute,
   ConversaIdRoute: ConversaIdRoute,
   CriarDescreverRoute: CriarDescreverRoute,
   CriarPreparandoRoute: CriarPreparandoRoute,
