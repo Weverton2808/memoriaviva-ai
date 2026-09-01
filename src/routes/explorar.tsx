@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import { useState } from "react";
@@ -5,9 +6,8 @@ import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Input } from "@/components/ui/input";
 import { CATEGORIAS, getCategoria } from "@/data/categorias";
-import { useDb } from "@/hooks/use-db";
-import { listarPublicos } from "@/services/db";
-import type { CategoriaId, KnowledgeArticle } from "@/types";
+import { listarPublicos } from "@/services/knowledgeService";
+import type { CategoriaId } from "@/types";
 
 export const Route = createFileRoute("/explorar")({
   head: () => ({
@@ -29,16 +29,15 @@ export const Route = createFileRoute("/explorar")({
 });
 
 function Explorar() {
-  const artigos = useDb<KnowledgeArticle[]>(() => listarPublicos(), []);
-  const [filtro, setFiltro] = useState<CategoriaId | "todos">("todos");
+  const [filtro, setFiltro] = useState<CategoriaId | "todas">("todas");
   const [busca, setBusca] = useState("");
 
-  const lista = artigos.filter(
-    (a) =>
-      (filtro === "todos" || a.category === filtro) &&
-      (busca.trim() === "" ||
-        `${a.title} ${a.summary} ${a.author_name}`.toLowerCase().includes(busca.toLowerCase())),
-  );
+  const consulta = useQuery({
+    queryKey: ["publicos", filtro, busca.trim()],
+    queryFn: () => listarPublicos({ categoria: filtro, busca }),
+  });
+
+  const lista = consulta.data ?? [];
 
   return (
     <AppShell largura="larga">
@@ -56,20 +55,20 @@ function Explorar() {
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
           aria-label="Buscar conhecimento"
-          placeholder="Buscar por assunto ou autor…"
+          placeholder="Buscar por assunto…"
           className="h-14 rounded-2xl pl-12 text-lg"
         />
       </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        {([{ id: "todos", emoji: "✨", nome: "Todos" }, ...CATEGORIAS] as const).map((c) => {
+        {([{ id: "todas", emoji: "✨", nome: "Todos" }, ...CATEGORIAS] as const).map((c) => {
           const ativo = filtro === c.id;
           return (
             <button
               key={c.id}
               type="button"
               aria-pressed={ativo}
-              onClick={() => setFiltro(c.id as CategoriaId | "todos")}
+              onClick={() => setFiltro(c.id as CategoriaId | "todas")}
               className={`min-h-11 rounded-full border-2 px-5 text-base font-semibold transition-colors ${
                 ativo
                   ? "border-primary bg-primary text-primary-foreground"
@@ -82,7 +81,9 @@ function Explorar() {
         })}
       </div>
 
-      {lista.length === 0 ? (
+      {consulta.isLoading ? (
+        <p className="mt-12 text-lg text-muted-foreground">Carregando conhecimentos…</p>
+      ) : lista.length === 0 ? (
         <p className="mt-12 text-lg text-muted-foreground">
           Nenhum conhecimento encontrado com esses filtros.
         </p>

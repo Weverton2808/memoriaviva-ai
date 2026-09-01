@@ -3,7 +3,7 @@
 
 import { getCategoria } from "@/data/categorias";
 import type { KnowledgeArticle, KnowledgeSession, Message, Secao } from "@/types";
-import { uid } from "@/services/db";
+import { uid } from "@/lib/uid";
 
 export const ETAPAS_GERACAO = [
   "Organizando suas ideias",

@@ -1,8 +1,12 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Info, Plus, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { LogoIcone } from "@/components/logo";
+import { Protegido } from "@/components/protegido";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -13,18 +17,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useHidratado } from "@/hooks/use-db";
-import {
-  adicionarMensagem,
-  atualizarStatusSessao,
-  getPerfil,
-  getSessao,
-  listarMensagens,
-  salvarArtigo,
-} from "@/services/db";
-import { mensagemProgresso, proximaPergunta, MIN_PERGUNTAS } from "@/services/entrevista";
-import { gerarGuia } from "@/services/gerador";
-import type { KnowledgeSession, Message } from "@/types";
+import { ERROS, mensagemDeErro } from "@/lib/erros";
+import { generateKnowledgeGuide, generateNextQuestion } from "@/services/aiService";
+import { mensagemProgresso } from "@/services/entrevista";
+import { getSessao } from "@/services/knowledgeService";
+import { adicionarMensagem, listarMensagens } from "@/services/messageService";
 
 export const Route = createFileRoute("/conversa/$id")({
   head: () => ({
@@ -38,66 +35,71 @@ export const Route = createFileRoute("/conversa/$id")({
       { property: "og:description", content: "Uma conversa tranquila sobre o que você sabe." },
     ],
   }),
-  component: Conversa,
+  component: () => (
+    <Protegido>
+      <Conversa />
+    </Protegido>
+  ),
 });
 
 function Conversa() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const hidratado = useHidratado();
-  const [sessao, setSessao] = useState<KnowledgeSession | null>(null);
-  const [mensagens, setMensagens] = useState<Message[]>([]);
+  const queryClient = useQueryClient();
+  const proximaPerguntaFn = useServerFn(generateNextQuestion);
+  const gerarGuiaFn = useServerFn(generateKnowledgeGuide);
+
   const [texto, setTexto] = useState("");
-  const [pensando, setPensando] = useState(false);
   const [oferta, setOferta] = useState(false);
   const fim = useRef<HTMLDivElement>(null);
 
+  const sessao = useQuery({ queryKey: ["sessao", id], queryFn: () => getSessao(id) });
+  const mensagens = useQuery({
+    queryKey: ["mensagens", id],
+    queryFn: () => listarMensagens(id),
+  });
+
+  const lista = mensagens.data ?? [];
+
+  // Sessão inexistente ou de outra pessoa: volta para o começo.
   useEffect(() => {
-    if (!hidratado) return;
-    const s = getSessao(id);
-    if (!s) {
-      void navigate({ to: "/criar" });
-      return;
-    }
-    setSessao(s);
-    setMensagens(listarMensagens(id));
-  }, [hidratado, id, navigate]);
+    if (sessao.isSuccess && !sessao.data) void navigate({ to: "/criar" });
+  }, [sessao.isSuccess, sessao.data, navigate]);
+
+  const responder = useMutation({
+    mutationFn: async (resposta: string) => {
+      await adicionarMensagem(id, "user", resposta);
+      await queryClient.invalidateQueries({ queryKey: ["mensagens", id] });
+      return proximaPerguntaFn({ data: { sessionId: id } });
+    },
+    onSuccess: async (r) => {
+      await queryClient.invalidateQueries({ queryKey: ["mensagens", id] });
+      if (r.oferecerGuia) setOferta(true);
+    },
+    onError: (e) => toast.error(mensagemDeErro(e, ERROS.ia)),
+  });
+
+  const criarGuia = useMutation({
+    mutationFn: () => gerarGuiaFn({ data: { sessionId: id } }),
+    onSuccess: (r) =>
+      navigate({ to: "/guia/$id", params: { id: r.articleId }, search: { novo: true } }),
+    onError: (e) => toast.error(mensagemDeErro(e, ERROS.guia)),
+  });
+
+  const pensando = responder.isPending;
 
   useEffect(() => {
     fim.current?.scrollIntoView({ behavior: "smooth" });
-  }, [mensagens.length, pensando]);
+  }, [lista.length, pensando]);
 
-  const respostas = mensagens.filter((m) => m.role === "user").length - 1;
+  // A primeira mensagem é a descrição inicial; ela não conta como resposta da entrevista.
+  const respostas = lista.filter((m) => m.role === "user").length - 1;
 
   function enviar() {
-    if (!sessao || !texto.trim() || pensando) return;
-    adicionarMensagem(sessao.id, "user", texto.trim());
-    const atualizadas = listarMensagens(sessao.id);
-    setMensagens(atualizadas);
+    const valor = texto.trim();
+    if (!valor || pensando) return;
     setTexto("");
-    setPensando(true);
-
-    setTimeout(() => {
-      const prox = proximaPergunta(sessao.category, sessao.topic, atualizadas);
-      adicionarMensagem(sessao.id, "assistant", prox.pergunta);
-      setMensagens(listarMensagens(sessao.id));
-      setPensando(false);
-      if (prox.oferecerGuia) setOferta(true);
-    }, 900);
-  }
-
-  function criarGuia() {
-    if (!sessao) return;
-    const perfil = getPerfil();
-    const artigo = gerarGuia(
-      sessao,
-      listarMensagens(sessao.id),
-      perfil?.name ?? "Você",
-      perfil?.id ?? null,
-    );
-    salvarArtigo(artigo);
-    atualizarStatusSessao(sessao.id, "completed");
-    void navigate({ to: "/guia/$id", params: { id: artigo.id }, search: { novo: true } });
+    responder.mutate(valor);
   }
 
   return (
@@ -142,9 +144,13 @@ function Conversa() {
           {mensagemProgresso(Math.max(0, respostas))}
         </p>
 
+        {mensagens.isLoading && (
+          <p className="py-10 text-center text-lg text-muted-foreground">Carregando a conversa…</p>
+        )}
+
         <ul className="space-y-4">
-          {mensagens.map((m, i) =>
-            i === 0 ? null : (
+          {lista.map((m, i) =>
+            i === 0 || m.role === "system" ? null : (
               <li
                 key={m.id}
                 className={m.role === "user" ? "flex justify-end" : "flex items-start gap-3"}
@@ -186,11 +192,12 @@ function Conversa() {
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row-reverse">
               <Button
-                onClick={criarGuia}
+                onClick={() => criarGuia.mutate()}
+                disabled={criarGuia.isPending}
                 size="lg"
                 className="h-14 flex-1 rounded-2xl text-lg font-bold"
               >
-                Criar meu guia
+                {criarGuia.isPending ? "Organizando…" : "Criar meu guia"}
               </Button>
               <Button
                 onClick={() => setOferta(false)}
@@ -258,14 +265,14 @@ function Conversa() {
             </Button>
           </div>
 
-          {respostas >= MIN_PERGUNTAS && !oferta && (
-            <button
-              type="button"
-              onClick={criarGuia}
-              className="mt-3 w-full rounded-2xl py-2 text-base font-bold text-primary underline-offset-4 hover:underline"
+          {respostas >= 4 && !oferta && (
+            <Button
+              variant="ghost"
+              className="mt-2 h-11 w-full rounded-2xl text-base"
+              onClick={() => setOferta(true)}
             >
               Encerrar e criar meu guia
-            </button>
+            </Button>
           )}
         </div>
       </div>

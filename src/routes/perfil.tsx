@@ -1,12 +1,13 @@
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BookOpen, Globe, Lock, Plus, Settings } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { Protegido } from "@/components/protegido";
 import { Button } from "@/components/ui/button";
 import { getCategoria } from "@/data/categorias";
-import { useDb, usePerfil } from "@/hooks/use-db";
-import { listarMeusArtigos } from "@/services/db";
-import type { KnowledgeArticle } from "@/types";
+import { useAuth } from "@/hooks/use-auth";
+import { listarMeusArtigos } from "@/services/knowledgeService";
 
 export const Route = createFileRoute("/perfil")({
   head: () => ({
@@ -20,12 +21,23 @@ export const Route = createFileRoute("/perfil")({
       { property: "og:description", content: "Seus conhecimentos registrados no Memória Viva." },
     ],
   }),
-  component: Perfil,
+  component: () => (
+    <Protegido>
+      <Perfil />
+    </Protegido>
+  ),
 });
 
 function Perfil() {
-  const perfil = usePerfil();
-  const meus = useDb<KnowledgeArticle[]>(() => listarMeusArtigos(), []);
+  const { user, profile } = useAuth();
+  const consulta = useQuery({
+    queryKey: ["meus-artigos", user?.id],
+    queryFn: () => listarMeusArtigos(user!.id),
+    enabled: Boolean(user?.id),
+  });
+
+  const meus = consulta.data ?? [];
+  const nome = profile?.name ?? "Você";
 
   return (
     <AppShell>
@@ -34,14 +46,16 @@ function Perfil() {
           className="flex size-16 items-center justify-center rounded-full bg-primary-soft text-2xl font-extrabold text-primary"
           aria-hidden="true"
         >
-          {(perfil?.name ?? "V").slice(0, 1).toUpperCase()}
+          {nome.slice(0, 1).toUpperCase()}
         </span>
         <div className="flex-1">
-          <h1 className="text-3xl">{perfil?.name ?? "Visitante"}</h1>
+          <h1 className="text-3xl">{nome}</h1>
           <p className="text-base text-muted-foreground">
             {meus.length === 0
               ? "Nenhum conhecimento registrado ainda"
-              : `${meus.length} conhecimento${meus.length > 1 ? "s" : ""} registrado${meus.length > 1 ? "s" : ""}`}
+              : `${meus.length} conhecimento${meus.length > 1 ? "s" : ""} registrado${
+                  meus.length > 1 ? "s" : ""
+                }`}
           </p>
         </div>
         <Button asChild variant="outline" size="icon" className="size-12 rounded-2xl">
@@ -60,7 +74,9 @@ function Perfil() {
 
       <h2 className="mt-10 text-2xl">Meus conhecimentos</h2>
 
-      {meus.length === 0 ? (
+      {consulta.isLoading ? (
+        <p className="mt-4 text-lg text-muted-foreground">Carregando…</p>
+      ) : meus.length === 0 ? (
         <div className="mt-4 rounded-3xl border-2 border-dashed border-border p-8 text-center">
           <BookOpen className="mx-auto size-10 text-muted-foreground" aria-hidden="true" />
           <p className="mt-3 text-lg text-muted-foreground">

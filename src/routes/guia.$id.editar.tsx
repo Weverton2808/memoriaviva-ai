@@ -1,15 +1,18 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
+import { Protegido } from "@/components/protegido";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useHidratado } from "@/hooks/use-db";
-import { atualizarArtigo, getArtigo, uid } from "@/services/db";
-import type { KnowledgeArticle, Secao } from "@/types";
+import { mensagemDeErro } from "@/lib/erros";
+import { uid } from "@/lib/uid";
+import { atualizarArtigo, getArtigo } from "@/services/knowledgeService";
+import type { Secao } from "@/types";
 
 export const Route = createFileRoute("/guia/$id/editar")({
   head: () => ({
@@ -20,41 +23,51 @@ export const Route = createFileRoute("/guia/$id/editar")({
       { property: "og:description", content: "Ajuste títulos, seções e observações do seu guia." },
     ],
   }),
-  component: Editar,
+  component: () => (
+    <Protegido>
+      <Editar />
+    </Protegido>
+  ),
 });
 
 function Editar() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const hidratado = useHidratado();
-  const [artigo, setArtigo] = useState<KnowledgeArticle | null>(null);
+  const queryClient = useQueryClient();
   const [titulo, setTitulo] = useState("");
   const [secoes, setSecoes] = useState<Secao[]>([]);
+  const [carregado, setCarregado] = useState(false);
+
+  const consulta = useQuery({ queryKey: ["artigo", id], queryFn: () => getArtigo(id) });
 
   useEffect(() => {
-    if (!hidratado) return;
-    const a = getArtigo(id);
-    if (!a) {
+    if (!consulta.isSuccess || carregado) return;
+    if (!consulta.data) {
       void navigate({ to: "/perfil" });
       return;
     }
-    setArtigo(a);
-    setTitulo(a.title);
-    setSecoes(a.content);
-  }, [hidratado, id, navigate]);
+    setTitulo(consulta.data.title);
+    setSecoes(consulta.data.content);
+    setCarregado(true);
+  }, [consulta.isSuccess, consulta.data, carregado, navigate]);
 
-  if (!artigo) {
+  const salvar = useMutation({
+    mutationFn: () =>
+      atualizarArtigo(id, { title: titulo.trim() || "Meu conhecimento", content: secoes }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["artigo", id] });
+      toast.success("Alterações salvas.");
+      void navigate({ to: "/guia/$id", params: { id } });
+    },
+    onError: (e) => toast.error(mensagemDeErro(e)),
+  });
+
+  if (!carregado) {
     return (
       <AppShell>
         <p className="py-16 text-center text-lg text-muted-foreground">Carregando…</p>
       </AppShell>
     );
-  }
-
-  function salvar() {
-    atualizarArtigo(id, { title: titulo.trim() || "Meu conhecimento", content: secoes });
-    toast.success("Alterações salvas.");
-    void navigate({ to: "/guia/$id", params: { id } });
   }
 
   return (
@@ -111,9 +124,7 @@ function Editar() {
           variant="outline"
           size="lg"
           className="h-14 w-full rounded-2xl text-lg"
-          onClick={() =>
-            setSecoes([...secoes, { id: uid(), titulo: "Observação", texto: "" }])
-          }
+          onClick={() => setSecoes([...secoes, { id: uid(), titulo: "Observação", texto: "" }])}
         >
           Adicionar uma observação
         </Button>
@@ -121,8 +132,13 @@ function Editar() {
 
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-3xl">
-          <Button onClick={salvar} size="lg" className="h-14 w-full rounded-2xl text-lg font-bold">
-            Salvar alterações
+          <Button
+            onClick={() => salvar.mutate()}
+            disabled={salvar.isPending}
+            size="lg"
+            className="h-14 w-full rounded-2xl text-lg font-bold"
+          >
+            {salvar.isPending ? "Salvando…" : "Salvar alterações"}
           </Button>
         </div>
       </div>
