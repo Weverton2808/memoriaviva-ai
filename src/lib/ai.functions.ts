@@ -46,6 +46,27 @@ function modoDemo() {
   return (process.env["MODO_IA"] ?? "ai").toLowerCase() === "demo";
 }
 
+/**
+ * A chave é obrigatória fora do modo demonstração explícito.
+ * Nunca devolvemos a chave, a URL do gateway nem o erro bruto para a pessoa:
+ * o diagnóstico fica no log do servidor e o cliente recebe apenas um código.
+ */
+function chaveObrigatoria(): string {
+  const chave = process.env["LOVABLE_API_KEY"];
+  if (!chave) {
+    console.error("[IA] Configuração ausente: LOVABLE_API_KEY não está definida no servidor.");
+    throw new Error("IA_NAO_CONFIGURADA");
+  }
+  return chave;
+}
+
+/** Loga o motivo real (sem conteúdo da conversa) e devolve um erro controlado. */
+function erroControlado(etapa: string, erro: unknown): Error {
+  const detalhe = erro instanceof Error ? erro.message : String(erro ?? "desconhecido");
+  console.error(`[IA] Falha em ${etapa}: ${detalhe.slice(0, 300)}`);
+  return new Error("IA_INDISPONIVEL");
+}
+
 interface ChatMsg {
   role: "system" | "user" | "assistant";
   content: string;
