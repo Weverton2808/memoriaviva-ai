@@ -12,8 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as ExplorarRouteImport } from './routes/explorar'
-import { Route as NovaRouteImport } from './routes/nova'
-import { Route as ConhecimentoIdRouteImport } from './routes/conhecimento.$id'
 import { Route as ConversaIdRouteImport } from './routes/conversa.$id'
 import { Route as CriarIndexRouteImport } from './routes/criar.index'
 import { Route as CriarDescreverRouteImport } from './routes/criar.descrever'
@@ -34,16 +32,6 @@ const EntrarRoute = EntrarRouteImport.update({
 const ExplorarRoute = ExplorarRouteImport.update({
   id: '/explorar',
   path: '/explorar',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NovaRoute = NovaRouteImport.update({
-  id: '/nova',
-  path: '/nova',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConhecimentoIdRoute = ConhecimentoIdRouteImport.update({
-  id: '/conhecimento/$id',
-  path: '/conhecimento/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConversaIdRoute = ConversaIdRouteImport.update({
@@ -81,8 +69,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/entrar': typeof EntrarRoute
   '/explorar': typeof ExplorarRoute
-  '/nova': typeof NovaRoute
-  '/conhecimento/$id': typeof ConhecimentoIdRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
@@ -94,8 +80,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/entrar': typeof EntrarRoute
   '/explorar': typeof ExplorarRoute
-  '/nova': typeof NovaRoute
-  '/conhecimento/$id': typeof ConhecimentoIdRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
@@ -108,8 +92,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/entrar': typeof EntrarRoute
   '/explorar': typeof ExplorarRoute
-  '/nova': typeof NovaRoute
-  '/conhecimento/$id': typeof ConhecimentoIdRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
@@ -123,8 +105,6 @@ export interface FileRouteTypes {
     | '/'
     | '/entrar'
     | '/explorar'
-    | '/nova'
-    | '/conhecimento/$id'
     | '/conversa/$id'
     | '/criar/descrever'
     | '/criar/preparando'
@@ -136,8 +116,6 @@ export interface FileRouteTypes {
     | '/'
     | '/entrar'
     | '/explorar'
-    | '/nova'
-    | '/conhecimento/$id'
     | '/conversa/$id'
     | '/criar/descrever'
     | '/criar/preparando'
@@ -149,8 +127,6 @@ export interface FileRouteTypes {
     | '/'
     | '/entrar'
     | '/explorar'
-    | '/nova'
-    | '/conhecimento/$id'
     | '/conversa/$id'
     | '/criar/descrever'
     | '/criar/preparando'
@@ -163,8 +139,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EntrarRoute: typeof EntrarRoute
   ExplorarRoute: typeof ExplorarRoute
-  NovaRoute: typeof NovaRoute
-  ConhecimentoIdRoute: typeof ConhecimentoIdRoute
   ConversaIdRoute: typeof ConversaIdRoute
   CriarDescreverRoute: typeof CriarDescreverRoute
   CriarPreparandoRoute: typeof CriarPreparandoRoute
@@ -194,20 +168,6 @@ declare module '@tanstack/react-router' {
       path: '/explorar'
       fullPath: '/explorar'
       preLoaderRoute: typeof ExplorarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nova': {
-      id: '/nova'
-      path: '/nova'
-      fullPath: '/nova'
-      preLoaderRoute: typeof NovaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/conhecimento/$id': {
-      id: '/conhecimento/$id'
-      path: '/conhecimento/$id'
-      fullPath: '/conhecimento/$id'
-      preLoaderRoute: typeof ConhecimentoIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conversa/$id': {
@@ -259,8 +219,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EntrarRoute: EntrarRoute,
   ExplorarRoute: ExplorarRoute,
-  NovaRoute: NovaRoute,
-  ConhecimentoIdRoute: ConhecimentoIdRoute,
   ConversaIdRoute: ConversaIdRoute,
   CriarDescreverRoute: CriarDescreverRoute,
   CriarPreparandoRoute: CriarPreparandoRoute,
