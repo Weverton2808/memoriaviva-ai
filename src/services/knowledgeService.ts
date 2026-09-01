@@ -55,19 +55,34 @@ export async function getSessao(id: string): Promise<KnowledgeSession | null> {
 /* -------------------------------- Guias --------------------------------- */
 
 const CAMPOS_ARTIGO =
-  "id, user_id, session_id, title, summary, content, category, is_public, created_at, updated_at, profiles(name)";
+  "id, user_id, session_id, title, summary, content, category, is_public, created_at, updated_at";
 
 interface LinhaArtigo extends Omit<KnowledgeArticle, "content" | "author_name"> {
   content: unknown;
-  profiles?: { name: string } | null;
 }
 
-function paraArtigo(linha: LinhaArtigo): KnowledgeArticle {
+function paraArtigo(linha: LinhaArtigo, autor = "Alguém"): KnowledgeArticle {
   return {
     ...linha,
     content: Array.isArray(linha.content) ? (linha.content as Secao[]) : [],
-    author_name: linha.profiles?.name ?? "Alguém",
+    author_name: autor,
   };
+}
+
+/**
+ * Os nomes dos autores vêm da tabela de perfis numa consulta separada:
+ * o vínculo do artigo é com a conta, e não diretamente com o perfil.
+ */
+async function nomesDosAutores(ids: Array<string | null>): Promise<Map<string, string>> {
+  const unicos = [...new Set(ids.filter((i): i is string => Boolean(i)))];
+  if (unicos.length === 0) return new Map();
+  const { data } = await supabase.from("profiles").select("id, name").in("id", unicos);
+  return new Map(((data ?? []) as Array<{ id: string; name: string }>).map((p) => [p.id, p.name]));
+}
+
+async function comAutores(linhas: LinhaArtigo[]): Promise<KnowledgeArticle[]> {
+  const nomes = await nomesDosAutores(linhas.map((l) => l.user_id));
+  return linhas.map((l) => paraArtigo(l, (l.user_id && nomes.get(l.user_id)) || "Alguém"));
 }
 
 export async function getArtigo(id: string): Promise<KnowledgeArticle | null> {
@@ -77,7 +92,8 @@ export async function getArtigo(id: string): Promise<KnowledgeArticle | null> {
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
-  return data ? paraArtigo(data as unknown as LinhaArtigo) : null;
+  if (!data) return null;
+  return (await comAutores([data as unknown as LinhaArtigo]))[0] ?? null;
 }
 
 export async function getArtigoDaSessao(sessionId: string): Promise<KnowledgeArticle | null> {
@@ -89,7 +105,8 @@ export async function getArtigoDaSessao(sessionId: string): Promise<KnowledgeArt
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  return data ? paraArtigo(data as unknown as LinhaArtigo) : null;
+  if (!data) return null;
+  return (await comAutores([data as unknown as LinhaArtigo]))[0] ?? null;
 }
 
 export async function listarMeusArtigos(userId: string): Promise<KnowledgeArticle[]> {
@@ -99,7 +116,7 @@ export async function listarMeusArtigos(userId: string): Promise<KnowledgeArticl
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
+  return comAutores((data ?? []) as unknown as LinhaArtigo[]);
 }
 
 /** Explorar: apenas guias públicos, com busca simples por título e resumo. */
@@ -124,7 +141,7 @@ export async function listarPublicos(filtros?: {
 
   const { data, error } = await consulta;
   if (error) throw error;
-  return ((data ?? []) as unknown as LinhaArtigo[]).map(paraArtigo);
+  return comAutores((data ?? []) as unknown as LinhaArtigo[]);
 }
 
 export async function atualizarArtigo(
@@ -138,7 +155,7 @@ export async function atualizarArtigo(
     .select(CAMPOS_ARTIGO)
     .single();
   if (error) throw error;
-  return paraArtigo(data as unknown as LinhaArtigo);
+  return (await comAutores([data as unknown as LinhaArtigo]))[0]!;
 }
 
 export async function excluirArtigo(id: string) {
