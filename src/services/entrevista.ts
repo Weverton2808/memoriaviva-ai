@@ -1,10 +1,14 @@
 // Entrevistadora simulada do Memória Viva.
 //
 // Nesta versão do MVP as perguntas são geradas localmente, de forma dinâmica,
-// a partir do que a pessoa escreve. A assinatura das funções foi desenhada para
+// a partir do que a pessoa escreve, seguindo as fases e regras do prompt mestre
+// (ver prompt-entrevistadora.ts). A assinatura das funções foi desenhada para
 // que a troca por uma IA real (Lovable AI Gateway) não exija mudanças na interface.
 
 import type { CategoriaId, Message } from "@/types";
+
+// Reexportado para o futuro backend (IA real) usar o mesmo prompt mestre.
+export { montarSystemPrompt, montarPromptGuia } from "@/services/prompt-entrevistadora";
 
 export const MIN_PERGUNTAS = 8;
 export const MAX_PERGUNTAS = 15;
