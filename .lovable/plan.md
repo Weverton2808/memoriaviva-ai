@@ -31,8 +31,10 @@ public.knowledge_sessions
   user_id uuid -> auth.users(id)
   category knowledge_category not null
   topic text not null
-  status session_status default 'em_andamento'
+  status session_status default 'active'
   created_at timestamptz default now()
+
+-- enum session_status: 'active' | 'completed' | 'archived'
 
 public.messages
   id uuid pk default gen_random_uuid()
