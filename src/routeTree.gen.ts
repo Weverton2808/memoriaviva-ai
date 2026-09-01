@@ -17,6 +17,7 @@ import { Route as ConhecimentoIdRouteImport } from './routes/conhecimento.$id'
 import { Route as ConversaIdRouteImport } from './routes/conversa.$id'
 import { Route as CriarIndexRouteImport } from './routes/criar.index'
 import { Route as CriarDescreverRouteImport } from './routes/criar.descrever'
+import { Route as CriarPreparandoRouteImport } from './routes/criar.preparando'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +59,11 @@ const CriarDescreverRoute = CriarDescreverRouteImport.update({
   path: '/criar/descrever',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CriarPreparandoRoute = CriarPreparandoRouteImport.update({
+  id: '/criar/preparando',
+  path: '/criar/preparando',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/conhecimento/$id': typeof ConhecimentoIdRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
+  '/criar/preparando': typeof CriarPreparandoRoute
   '/criar/': typeof CriarIndexRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/conhecimento/$id': typeof ConhecimentoIdRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
+  '/criar/preparando': typeof CriarPreparandoRoute
   '/criar': typeof CriarIndexRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/conhecimento/$id': typeof ConhecimentoIdRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
+  '/criar/preparando': typeof CriarPreparandoRoute
   '/criar/': typeof CriarIndexRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/conhecimento/$id'
     | '/conversa/$id'
     | '/criar/descrever'
+    | '/criar/preparando'
     | '/criar/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/conhecimento/$id'
     | '/conversa/$id'
     | '/criar/descrever'
+    | '/criar/preparando'
     | '/criar'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/conhecimento/$id'
     | '/conversa/$id'
     | '/criar/descrever'
+    | '/criar/preparando'
     | '/criar/'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   ConhecimentoIdRoute: typeof ConhecimentoIdRoute
   ConversaIdRoute: typeof ConversaIdRoute
   CriarDescreverRoute: typeof CriarDescreverRoute
+  CriarPreparandoRoute: typeof CriarPreparandoRoute
   CriarIndexRoute: typeof CriarIndexRoute
 }
 
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CriarDescreverRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/criar/preparando': {
+      id: '/criar/preparando'
+      path: '/criar/preparando'
+      fullPath: '/criar/preparando'
+      preLoaderRoute: typeof CriarPreparandoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConhecimentoIdRoute: ConhecimentoIdRoute,
   ConversaIdRoute: ConversaIdRoute,
   CriarDescreverRoute: CriarDescreverRoute,
+  CriarPreparandoRoute: CriarPreparandoRoute,
   CriarIndexRoute: CriarIndexRoute,
 }
 export const routeTree = rootRouteImport
