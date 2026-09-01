@@ -8,6 +8,13 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { ERROS, mensagemDeErro } from "@/lib/erros";
 import { cadastrar, entrar, entrarComGoogle, recuperarSenha } from "@/services/authService";
+import { lerRascunho } from "@/services/rascunho";
+
+/** Depois de entrar, a pessoa volta exatamente para onde parou. */
+function destinoAposEntrar(): "/criar" | "/criar/preparando" {
+  const r = lerRascunho();
+  return r.categoria && r.descricao ? "/criar/preparando" : "/criar";
+}
 
 export const Route = createFileRoute("/entrar")({
   head: () => ({
@@ -40,7 +47,7 @@ function Entrar() {
 
   // Quem já está com a conta aberta segue direto para criar.
   useEffect(() => {
-    if (user) void navigate({ to: "/criar" });
+    if (user) void navigate({ to: destinoAposEntrar() });
   }, [user, navigate]);
 
   async function enviar(e: React.FormEvent) {
@@ -68,7 +75,7 @@ function Entrar() {
       } else {
         await entrar(email.trim(), senha);
       }
-      void navigate({ to: "/criar" });
+      void navigate({ to: destinoAposEntrar() });
     } catch (e2) {
       setErro(mensagemDeErro(e2, ERROS.entrar));
     } finally {
