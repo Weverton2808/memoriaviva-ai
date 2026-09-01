@@ -10,33 +10,102 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as ExplorarRouteImport } from './routes/explorar'
+import { Route as NovaRouteImport } from './routes/nova'
+import { Route as ConhecimentoIdRouteImport } from './routes/conhecimento.$id'
+import { Route as ConversaIdRouteImport } from './routes/conversa.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EntrarRoute = EntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExplorarRoute = ExplorarRouteImport.update({
+  id: '/explorar',
+  path: '/explorar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NovaRoute = NovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConhecimentoIdRoute = ConhecimentoIdRouteImport.update({
+  id: '/conhecimento/$id',
+  path: '/conhecimento/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConversaIdRoute = ConversaIdRouteImport.update({
+  id: '/conversa/$id',
+  path: '/conversa/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/entrar': typeof EntrarRoute
+  '/explorar': typeof ExplorarRoute
+  '/nova': typeof NovaRoute
+  '/conhecimento/$id': typeof ConhecimentoIdRoute
+  '/conversa/$id': typeof ConversaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/entrar': typeof EntrarRoute
+  '/explorar': typeof ExplorarRoute
+  '/nova': typeof NovaRoute
+  '/conhecimento/$id': typeof ConhecimentoIdRoute
+  '/conversa/$id': typeof ConversaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/entrar': typeof EntrarRoute
+  '/explorar': typeof ExplorarRoute
+  '/nova': typeof NovaRoute
+  '/conhecimento/$id': typeof ConhecimentoIdRoute
+  '/conversa/$id': typeof ConversaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/entrar'
+    | '/explorar'
+    | '/nova'
+    | '/conhecimento/$id'
+    | '/conversa/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/entrar'
+    | '/explorar'
+    | '/nova'
+    | '/conhecimento/$id'
+    | '/conversa/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/entrar'
+    | '/explorar'
+    | '/nova'
+    | '/conhecimento/$id'
+    | '/conversa/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EntrarRoute: typeof EntrarRoute
+  ExplorarRoute: typeof ExplorarRoute
+  NovaRoute: typeof NovaRoute
+  ConhecimentoIdRoute: typeof ConhecimentoIdRoute
+  ConversaIdRoute: typeof ConversaIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +117,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/entrar': {
+      id: '/entrar'
+      path: '/entrar'
+      fullPath: '/entrar'
+      preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explorar': {
+      id: '/explorar'
+      path: '/explorar'
+      fullPath: '/explorar'
+      preLoaderRoute: typeof ExplorarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nova': {
+      id: '/nova'
+      path: '/nova'
+      fullPath: '/nova'
+      preLoaderRoute: typeof NovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conhecimento/$id': {
+      id: '/conhecimento/$id'
+      path: '/conhecimento/$id'
+      fullPath: '/conhecimento/$id'
+      preLoaderRoute: typeof ConhecimentoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conversa/$id': {
+      id: '/conversa/$id'
+      path: '/conversa/$id'
+      fullPath: '/conversa/$id'
+      preLoaderRoute: typeof ConversaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EntrarRoute: EntrarRoute,
+  ExplorarRoute: ExplorarRoute,
+  NovaRoute: NovaRoute,
+  ConhecimentoIdRoute: ConhecimentoIdRoute,
+  ConversaIdRoute: ConversaIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
