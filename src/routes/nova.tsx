@@ -11,9 +11,8 @@ import {
 } from "@/lib/memoria";
 
 export const Route = createFileRoute("/nova")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    categoria: typeof s['categoria'] === "string" ? (s['categoria'] as CategoryId) : undefined,
-  }),
+  validateSearch: (s: Record<string, unknown>): { categoria?: CategoryId } =>
+    typeof s['categoria'] === "string" ? { categoria: s['categoria'] as CategoryId } : {},
   head: () => ({
     meta: [
       { title: "Começar uma conversa — Memória Viva" },
