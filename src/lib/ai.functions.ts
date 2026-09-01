@@ -354,11 +354,12 @@ export const generateKnowledgeGuide = createServerFn({ method: "POST" })
           content = guiaParaSecoes(guia);
         }
       } catch (erro) {
-        console.error("Falha na IA ao gerar o guia, usando modo demonstração:", erro);
+        throw erroControlado("generateKnowledgeGuide", erro);
       }
     }
 
     if (content.length === 0) {
+      if (!demo) throw erroControlado("generateKnowledgeGuide", "guia vazio devolvido pela IA");
       const simulado = gerarGuia(sessao, mensagens, autor, userId);
       title = title || simulado.title;
       summary = summary || simulado.summary;
