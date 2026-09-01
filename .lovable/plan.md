@@ -9,6 +9,14 @@ USUÁRIO → MEMÓRIA VIVA → SUPABASE → LOGIN / BANCO / CONVERSAS / CONHECIM
                         → GUIA FINAL
 ```
 
+## Decisões de produto
+- **Perfis de usuário:** sim. Tabela `public.users` ligada a `auth.users(id)` com campos:
+  - `id` (uuid, PK, referência a auth.users)
+  - `name` (text)
+  - `avatar_url` (text, opcional)
+  - `created_at` (timestamptz)
+- O schema existente será ajustado: renomear `full_name` para `name` e remover `display_age`/`city` para bater com a estrutura acima.
+
 ## Etapas
 
 ### 1. Ativar Lovable Cloud (Supabase)
