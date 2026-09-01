@@ -1,3 +1,4 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Check, Globe, Lock, Pencil, Save, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -13,10 +14,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { getCategoria } from "@/data/categorias";
-import { useHidratado } from "@/hooks/use-db";
-import { atualizarArtigo, getArtigo } from "@/services/db";
+import { useAuth } from "@/hooks/use-auth";
+import { ERROS, mensagemDeErro } from "@/lib/erros";
 import { ETAPAS_GERACAO, tempoLeitura } from "@/services/gerador";
-import type { KnowledgeArticle } from "@/types";
+import { atualizarArtigo, getArtigo } from "@/services/knowledgeService";
 
 export const Route = createFileRoute("/guia/$id/")({
   validateSearch: (search: Record<string, unknown>): { novo?: boolean } =>
@@ -39,20 +40,17 @@ function Guia() {
   const { id } = Route.useParams();
   const { novo } = Route.useSearch();
   const navigate = useNavigate();
-  const hidratado = useHidratado();
-  const [artigo, setArtigo] = useState<KnowledgeArticle | null>(null);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [etapa, setEtapa] = useState(novo ? 0 : ETAPAS_GERACAO.length);
   const [privacidade, setPrivacidade] = useState(false);
 
+  const consulta = useQuery({ queryKey: ["artigo", id], queryFn: () => getArtigo(id) });
+  const artigo = consulta.data ?? null;
+
   useEffect(() => {
-    if (!hidratado) return;
-    const a = getArtigo(id);
-    if (!a) {
-      void navigate({ to: "/explorar" });
-      return;
-    }
-    setArtigo(a);
-  }, [hidratado, id, navigate]);
+    if (consulta.isSuccess && !consulta.data) void navigate({ to: "/explorar" });
+  }, [consulta.isSuccess, consulta.data, navigate]);
 
   useEffect(() => {
     if (!novo || etapa >= ETAPAS_GERACAO.length) return;
@@ -60,7 +58,22 @@ function Guia() {
     return () => clearTimeout(t);
   }, [novo, etapa]);
 
-  if (!artigo) {
+  const publicar = useMutation({
+    mutationFn: (publico: boolean) => atualizarArtigo(id, { is_public: publico }),
+    onSuccess: async (_d, publico) => {
+      await queryClient.invalidateQueries({ queryKey: ["artigo", id] });
+      await queryClient.invalidateQueries({ queryKey: ["meus-artigos"] });
+      setPrivacidade(false);
+      toast.success(
+        publico
+          ? "Conhecimento publicado para outras pessoas."
+          : "Conhecimento guardado como privado.",
+      );
+    },
+    onError: (e) => toast.error(mensagemDeErro(e, ERROS.salvar)),
+  });
+
+  if (consulta.isLoading || !artigo) {
     return (
       <AppShell>
         <p className="py-16 text-center text-lg text-muted-foreground">Carregando…</p>
@@ -98,15 +111,8 @@ function Guia() {
   }
 
   const cat = getCategoria(artigo.category);
-
-  function definirPrivacidade(publico: boolean) {
-    atualizarArtigo(artigo!.id, { is_public: publico });
-    setArtigo({ ...artigo!, is_public: publico });
-    setPrivacidade(false);
-    toast.success(
-      publico ? "Conhecimento publicado para outras pessoas." : "Conhecimento guardado como privado.",
-    );
-  }
+  const meu = Boolean(user && artigo.user_id === user.id);
+  const minutos = tempoLeitura(artigo);
 
   async function compartilhar() {
     const url = typeof window !== "undefined" ? window.location.href : "";
@@ -129,7 +135,8 @@ function Guia() {
         <p className="text-sm font-bold tracking-widest text-primary">{cat.rotulo}</p>
         <h1 className="mt-2 text-3xl sm:text-4xl">{artigo.title}</h1>
         <p className="mt-3 text-base text-muted-foreground">
-          Baseado na experiência de {artigo.author_name} · {tempoLeitura(artigo)} minuto{tempoLeitura(artigo) > 1 ? "s" : ""} de leitura
+          Baseado na experiência de {artigo.author_name} · {minutos} minuto
+          {minutos > 1 ? "s" : ""} de leitura
         </p>
         <p className="mt-1 inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-sm font-semibold">
           {artigo.is_public ? (
@@ -156,44 +163,49 @@ function Guia() {
       </article>
 
       <div className="mt-10 grid gap-3">
-        <Button
-          size="lg"
-          className="h-14 rounded-2xl text-lg font-bold"
-          onClick={() => {
-            atualizarArtigo(artigo.id, {});
-            toast.success("Conhecimento salvo no seu perfil.");
-            void navigate({ to: "/perfil" });
-          }}
-        >
-          <Save className="size-5" aria-hidden="true" />
-          Salvar meu conhecimento
-        </Button>
+        {meu && (
+          <Button
+            size="lg"
+            className="h-14 rounded-2xl text-lg font-bold"
+            onClick={() => {
+              toast.success("Conhecimento salvo no seu perfil.");
+              void navigate({ to: "/perfil" });
+            }}
+          >
+            <Save className="size-5" aria-hidden="true" />
+            Salvar meu conhecimento
+          </Button>
+        )}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Button asChild variant="outline" size="lg" className="h-14 rounded-2xl text-base">
-            <Link to="/guia/$id/editar" params={{ id: artigo.id }}>
-              <Pencil className="size-5" aria-hidden="true" />
-              Editar
-            </Link>
-          </Button>
+          {meu && (
+            <Button asChild variant="outline" size="lg" className="h-14 rounded-2xl text-base">
+              <Link to="/guia/$id/editar" params={{ id: artigo.id }}>
+                <Pencil className="size-5" aria-hidden="true" />
+                Editar
+              </Link>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="lg"
             className="h-14 rounded-2xl text-base"
-            onClick={compartilhar}
+            onClick={() => void compartilhar()}
           >
             <Share2 className="size-5" aria-hidden="true" />
             Compartilhar
           </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="h-14 rounded-2xl text-base"
-            onClick={() => setPrivacidade(true)}
-          >
-            <Globe className="size-5" aria-hidden="true" />
-            Publicar
-          </Button>
+          {meu && (
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-14 rounded-2xl text-base"
+              onClick={() => setPrivacidade(true)}
+            >
+              <Globe className="size-5" aria-hidden="true" />
+              Publicar
+            </Button>
+          )}
         </div>
       </div>
 
@@ -210,7 +222,7 @@ function Guia() {
           <div className="grid gap-3">
             <button
               type="button"
-              onClick={() => definirPrivacidade(false)}
+              onClick={() => publicar.mutate(false)}
               className="rounded-2xl border-2 border-border p-5 text-left hover:border-primary"
             >
               <span className="block text-xl font-bold">🔒 Privado</span>
@@ -220,7 +232,7 @@ function Guia() {
             </button>
             <button
               type="button"
-              onClick={() => definirPrivacidade(true)}
+              onClick={() => publicar.mutate(true)}
               className="rounded-2xl border-2 border-border p-5 text-left hover:border-primary"
             >
               <span className="block text-xl font-bold">🌎 Público</span>
