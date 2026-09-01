@@ -129,7 +129,7 @@ function Guia() {
         <p className="text-sm font-bold tracking-widest text-primary">{cat.rotulo}</p>
         <h1 className="mt-2 text-3xl sm:text-4xl">{artigo.title}</h1>
         <p className="mt-3 text-base text-muted-foreground">
-          Baseado na experiência de {artigo.author_name} · {tempoLeitura(artigo)} minutos de leitura
+          Baseado na experiência de {artigo.author_name} · {tempoLeitura(artigo)} minuto{tempoLeitura(artigo) > 1 ? "s" : ""} de leitura
         </p>
         <p className="mt-1 inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-sm font-semibold">
           {artigo.is_public ? (
