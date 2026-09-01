@@ -22,6 +22,8 @@ export function mensagemDeErro(erro: unknown, padrao: string = ERROS.salvar): st
     return "Já existe uma conta com esse e-mail. Tente entrar.";
   if (t.includes("password") && t.includes("6"))
     return "Use uma senha com pelo menos 6 letras ou números.";
+  if (t.includes("weak") && t.includes("password"))
+    return "Essa senha é muito comum. Escolha outra, misturando letras e números.";
   if (t.includes("failed to fetch") || t.includes("network")) return ERROS.conexao;
   if (t.includes("rate limit") || t.includes("429"))
     return "Muitas tentativas seguidas. Aguarde um instante e tente de novo.";
