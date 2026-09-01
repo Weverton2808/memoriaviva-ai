@@ -6,12 +6,9 @@
 // que a troca por uma IA real (Lovable AI Gateway) não exija mudanças na interface.
 
 import type { CategoriaId, Message } from "@/types";
-import { montarSystemPrompt } from "@/services/prompt-entrevistadora";
 
 // Reexportado para o futuro backend (IA real) usar o mesmo prompt mestre.
 export { montarSystemPrompt, montarPromptGuia } from "@/services/prompt-entrevistadora";
-
-void montarSystemPrompt;
 
 export const MIN_PERGUNTAS = 8;
 export const MAX_PERGUNTAS = 15;
