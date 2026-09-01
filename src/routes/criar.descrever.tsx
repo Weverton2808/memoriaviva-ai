@@ -6,10 +6,17 @@ import { PassoIndicador } from "@/components/passo-indicador";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getCategoria } from "@/data/categorias";
+import { registrarEvento } from "@/services/analytics";
 import { lerRascunho, salvarRascunho } from "@/services/rascunho";
 import type { CategoriaId } from "@/types";
 
 const LIMITE = 500;
+
+const EXEMPLOS = [
+  "Trabalhei 25 anos consertando máquinas de lavar.",
+  "Faço o pão da minha avó desde criança.",
+  "Aprendi a cuidar de uma horta sozinho, no quintal de casa.",
+];
 
 export const Route = createFileRoute("/criar/descrever")({
   head: () => ({
@@ -48,6 +55,7 @@ function Descrever() {
   function comecar() {
     if (texto.trim().length < 10) return;
     salvarRascunho({ descricao: texto.trim() });
+    registrarEvento("topic_submitted", { tamanho: texto.trim().length });
     void navigate({ to: "/criar/preparando" });
   }
 
@@ -57,7 +65,7 @@ function Descrever() {
 
       <h1 className="mt-4 text-3xl">Conte rapidamente sobre o que você sabe.</h1>
       <p className="mt-2 text-lg text-muted-foreground">
-        Não se preocupe em organizar. Vamos conversar e fazer as perguntas certas.
+        Não precisa escrever muito nem organizar as ideias. Duas ou três linhas já bastam.
       </p>
 
       {categoria && (
@@ -66,14 +74,23 @@ function Descrever() {
         </p>
       )}
 
-      <figure className="mt-5 rounded-2xl border border-dashed border-border bg-surface p-4">
-        <figcaption className="text-sm font-semibold text-muted-foreground">
-          Exemplo de como começar
-        </figcaption>
-        <p className="mt-1 text-lg text-foreground">
-          “Trabalhei durante 25 anos consertando máquinas de lavar.”
+      <div className="mt-5 rounded-2xl border border-dashed border-border bg-surface p-4">
+        <p className="text-sm font-semibold text-muted-foreground">
+          Exemplos de como começar — toque em um para usar
         </p>
-      </figure>
+        <div className="mt-3 flex flex-col gap-2">
+          {EXEMPLOS.map((exemplo) => (
+            <button
+              key={exemplo}
+              type="button"
+              onClick={() => setTexto(exemplo)}
+              className="min-h-12 rounded-xl bg-card px-4 py-3 text-left text-lg text-foreground hover:bg-primary-soft"
+            >
+              “{exemplo}”
+            </button>
+          ))}
+        </div>
+      </div>
 
       <label htmlFor="descricao" className="mt-6 block text-lg font-semibold">
         Sua experiência
@@ -91,7 +108,7 @@ function Descrever() {
       </p>
 
       <p className="mt-4 rounded-2xl bg-accent-soft p-4 text-base text-accent-foreground">
-        Não existe resposta certa. Apenas conte com suas próprias palavras.
+        Não existe resposta certa, e você poderá editar tudo depois.
       </p>
 
       <Button

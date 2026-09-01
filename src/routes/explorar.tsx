@@ -41,9 +41,9 @@ function Explorar() {
 
   return (
     <AppShell largura="larga">
-      <h1 className="text-3xl sm:text-4xl">Explorar conhecimentos</h1>
+      <h1 className="text-3xl sm:text-4xl">O que você gostaria de aprender?</h1>
       <p className="mt-2 text-lg text-muted-foreground">
-        Tudo aqui foi contado por alguém que viveu. Leia, aprenda e passe adiante.
+        Tudo aqui foi contado por alguém que viveu. Busque um assunto ou escolha uma categoria.
       </p>
 
       <div className="relative mt-6">
