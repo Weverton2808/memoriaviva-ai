@@ -39,7 +39,7 @@ public.knowledge_sessions
 public.messages
   id uuid pk default gen_random_uuid()
   session_id uuid -> knowledge_sessions(id)
-  role message_role not null
+  role message_role not null  -- 'user' | 'assistant'
   content text not null
   created_at timestamptz default now()
 
