@@ -20,6 +20,7 @@ export default defineConfig({
         registerType: "autoUpdate",
         injectRegister: null,
         filename: "sw.js",
+        outDir: "dist/client",
         devOptions: { enabled: false },
         // O manifesto já é servido de public/manifest.webmanifest.
         manifest: false,
