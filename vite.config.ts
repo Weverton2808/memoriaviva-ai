@@ -41,8 +41,25 @@ export default defineConfig({
           skipWaiting: true,
           runtimeCaching: [
             {
-              // Navegações sempre tentam a rede primeiro (nunca cache-first em HTML).
-              urlPattern: ({ request }) => request.mode === "navigate",
+              // Server functions, APIs e retorno do OAuth nunca passam pelo cache.
+              urlPattern: ({ url, sameOrigin }) =>
+                sameOrigin &&
+                (url.pathname.startsWith("/_serverFn") ||
+                  url.pathname.startsWith("/api") ||
+                  url.pathname.startsWith("/~oauth")),
+              handler: "NetworkOnly",
+            },
+            {
+              // Navegações sempre tentam a rede primeiro (nunca cache-first em HTML),
+              // exceto as rotas de autenticação e servidor acima.
+              urlPattern: ({ request, url, sameOrigin }) =>
+                request.mode === "navigate" &&
+                !(
+                  sameOrigin &&
+                  (url.pathname.startsWith("/_serverFn") ||
+                    url.pathname.startsWith("/api") ||
+                    url.pathname.startsWith("/~oauth"))
+                ),
               handler: "NetworkFirst",
               options: {
                 cacheName: "mv-paginas",
