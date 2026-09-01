@@ -46,6 +46,27 @@ function modoDemo() {
   return (process.env["MODO_IA"] ?? "ai").toLowerCase() === "demo";
 }
 
+/**
+ * A chave é obrigatória fora do modo demonstração explícito.
+ * Nunca devolvemos a chave, a URL do gateway nem o erro bruto para a pessoa:
+ * o diagnóstico fica no log do servidor e o cliente recebe apenas um código.
+ */
+function chaveObrigatoria(): string {
+  const chave = process.env["LOVABLE_API_KEY"];
+  if (!chave) {
+    console.error("[IA] Configuração ausente: LOVABLE_API_KEY não está definida no servidor.");
+    throw new Error("IA_NAO_CONFIGURADA");
+  }
+  return chave;
+}
+
+/** Loga o motivo real (sem conteúdo da conversa) e devolve um erro controlado. */
+function erroControlado(etapa: string, erro: unknown): Error {
+  const detalhe = erro instanceof Error ? erro.message : String(erro ?? "desconhecido");
+  console.error(`[IA] Falha em ${etapa}: ${detalhe.slice(0, 300)}`);
+  return new Error("IA_INDISPONIVEL");
+}
+
 interface ChatMsg {
   role: "system" | "user" | "assistant";
   content: string;
@@ -188,18 +209,21 @@ export const generateNextQuestion = createServerFn({ method: "POST" })
     const supabase = context.supabase as Cliente;
     const { sessao, mensagens } = await carregarContexto(supabase, data.sessionId);
 
-    const chave = process.env["LOVABLE_API_KEY"];
+    // O modo demonstração só existe quando MODO_IA=demo é definido de propósito.
+    // Fora dele, a ausência da chave é erro de configuração, não fallback.
+    const demo = modoDemo();
+    const chave = demo ? "" : chaveObrigatoria();
     let pergunta = "";
     const respostas = mensagens.filter((m) => m.role === "user").length;
 
     // A partir do mínimo de respostas, a camada de qualidade decide se já dá
     // para gerar o guia e aponta o que ainda falta perguntar.
     let analise: AnaliseConhecimento | null = null;
-    if (!modoDemo() && chave && respostas >= 8) {
+    if (!demo && respostas >= 8) {
       analise = await analisarConversa(sessao, mensagens, chave);
     }
 
-    if (!modoDemo() && chave) {
+    if (!demo) {
       try {
         const system = montarSystemPrompt(
           sessao.category as CategoriaId,
@@ -225,11 +249,13 @@ export const generateNextQuestion = createServerFn({ method: "POST" })
           chave,
         );
       } catch (erro) {
-        console.error("Falha na IA, usando modo demonstração:", erro);
+        // Erro controlado: a conversa continua salva e a pessoa pode tentar de novo.
+        throw erroControlado("generateNextQuestion", erro);
       }
     }
 
     if (!pergunta) {
+      if (!demo) throw erroControlado("generateNextQuestion", "resposta vazia da IA");
       pergunta = proximaPergunta(sessao.category as CategoriaId, sessao.topic, mensagens).pergunta;
     }
 
@@ -292,13 +318,14 @@ export const generateKnowledgeGuide = createServerFn({ method: "POST" })
       .maybeSingle();
     const autor = (perfil as { name?: string } | null)?.name ?? "Você";
 
-    const chave = process.env["LOVABLE_API_KEY"];
+    const demo = modoDemo();
+    const chave = demo ? "" : chaveObrigatoria();
     let title = "";
     let summary = "";
     let content: Secao[] = [];
     let analise: AnaliseConhecimento | null = null;
 
-    if (!modoDemo() && chave) {
+    if (!demo) {
       try {
         const transcricao = transcrever(mensagens);
         analise = await analisarConversa(sessao, mensagens, chave);
@@ -327,11 +354,12 @@ export const generateKnowledgeGuide = createServerFn({ method: "POST" })
           content = guiaParaSecoes(guia);
         }
       } catch (erro) {
-        console.error("Falha na IA ao gerar o guia, usando modo demonstração:", erro);
+        throw erroControlado("generateKnowledgeGuide", erro);
       }
     }
 
     if (content.length === 0) {
+      if (!demo) throw erroControlado("generateKnowledgeGuide", "guia vazio devolvido pela IA");
       const simulado = gerarGuia(sessao, mensagens, autor, userId);
       title = title || simulado.title;
       summary = summary || simulado.summary;

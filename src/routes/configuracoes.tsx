@@ -1,13 +1,26 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { LogOut, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/app-shell";
 import { Protegido } from "@/components/protegido";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
+import { deleteMyAccount } from "@/lib/conta.functions";
 import { mensagemDeErro } from "@/lib/erros";
 import { atualizarPerfil, sair } from "@/services/authService";
 
@@ -33,6 +46,11 @@ function Configuracoes() {
   const [nome, setNome] = useState("");
   const [letraGrande, setLetraGrande] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
+  const [confirmacao, setConfirmacao] = useState("");
+  const [excluindo, setExcluindo] = useState(false);
+  const excluirConta__fn = useServerFn(deleteMyAccount);
+
 
   useEffect(() => setNome(profile?.name ?? ""), [profile?.name]);
 
@@ -52,6 +70,25 @@ function Configuracoes() {
       toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function excluirConta() {
+    setExcluindo(true);
+    try {
+      await excluirConta__fn({ data: { confirmacao: confirmacao.trim().toUpperCase() } });
+      setConfirmando(false);
+      toast.success("Sua conta e seus dados foram excluídos.");
+      try {
+        await sair();
+      } catch {
+        /* a conta já não existe: a sessão local é descartada mesmo assim */
+      }
+      void navigate({ to: "/" });
+    } catch (e) {
+      toast.error(mensagemDeErro(e));
+    } finally {
+      setExcluindo(false);
     }
   }
 
@@ -115,6 +152,74 @@ function Configuracoes() {
           <LogOut className="size-5" aria-hidden="true" />
           Sair da conta
         </Button>
+
+        <div className="mt-8 border-t border-border pt-6">
+          <h3 className="text-lg font-bold text-destructive">Excluir minha conta</h3>
+          <p className="mt-2 text-base text-muted-foreground">
+            Apaga para sempre o seu perfil, todas as conversas e todos os guias. Não é possível
+            desfazer.
+          </p>
+
+          <AlertDialog open={confirmando} onOpenChange={setConfirmando}>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="mt-4 h-14 w-full rounded-2xl border-destructive text-lg font-bold text-destructive"
+              >
+                <Trash2 className="size-5" aria-hidden="true" />
+                Excluir minha conta
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-3xl">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-2xl">Excluir sua conta?</AlertDialogTitle>
+                <AlertDialogDescription className="text-base">
+                  Isso apaga para sempre o seu perfil, suas conversas e seus guias — inclusive os
+                  que estão públicos. Para confirmar, escreva a palavra EXCLUIR abaixo.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <label htmlFor="confirmacao" className="text-base font-semibold">
+                Escreva EXCLUIR
+              </label>
+              <Input
+                id="confirmacao"
+                value={confirmacao}
+                autoComplete="off"
+                onChange={(e) => setConfirmacao(e.target.value)}
+                className="h-14 rounded-2xl text-lg"
+              />
+              <AlertDialogFooter>
+                <AlertDialogCancel className="h-14 rounded-2xl text-lg">Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={confirmacao.trim().toUpperCase() !== "EXCLUIR" || excluindo}
+                  className="h-14 rounded-2xl bg-destructive text-lg font-bold text-destructive-foreground hover:bg-destructive/90"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void excluirConta();
+                  }}
+                >
+                  {excluindo ? "Excluindo…" : "Excluir para sempre"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <p className="mt-4 text-sm text-muted-foreground">
+            Saiba mais em{" "}
+            <Link to="/excluir-conta" className="font-semibold text-primary underline">
+              como excluir sua conta
+            </Link>
+            ,{" "}
+            <Link to="/privacidade" className="font-semibold text-primary underline">
+              Política de Privacidade
+            </Link>{" "}
+            e{" "}
+            <Link to="/termos" className="font-semibold text-primary underline">
+              Termos de Uso
+            </Link>
+            .
+          </p>
+        </div>
       </section>
     </AppShell>
   );

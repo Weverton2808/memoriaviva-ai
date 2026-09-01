@@ -15,6 +15,14 @@ export function mensagemDeErro(erro: unknown, padrao: string = ERROS.salvar): st
   const t = texto.toLowerCase();
 
   if (!texto) return padrao;
+  // Códigos internos do servidor: nunca mostramos detalhes técnicos da IA.
+  if (texto.includes("IA_NAO_CONFIGURADA"))
+    return "O serviço de inteligência artificial não está configurado no momento. Suas respostas estão salvas. Tente novamente mais tarde.";
+  if (texto.includes("IA_INDISPONIVEL")) return padrao === ERROS.salvar ? ERROS.ia : padrao;
+  if (texto.includes("CONFIRMACAO_INVALIDA"))
+    return "Escreva a palavra EXCLUIR exatamente assim para confirmar.";
+  if (texto.includes("EXCLUSAO_FALHOU"))
+    return "Não conseguimos excluir sua conta agora. Tente novamente em alguns minutos.";
   if (t.includes("invalid login credentials")) return "E-mail ou senha incorretos.";
   if (t.includes("email not confirmed"))
     return "Confirme seu e-mail antes de entrar. Enviamos um link para você.";

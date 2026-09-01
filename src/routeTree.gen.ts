@@ -13,8 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BoasVindasRouteImport } from './routes/boas-vindas'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as ExcluirContaRouteImport } from './routes/excluir-conta'
 import { Route as ExplorarRouteImport } from './routes/explorar'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as ConversaIdRouteImport } from './routes/conversa.$id'
 import { Route as CriarIndexRouteImport } from './routes/criar.index'
 import { Route as CriarDescreverRouteImport } from './routes/criar.descrever'
@@ -42,6 +45,11 @@ const EntrarRoute = EntrarRouteImport.update({
   path: '/entrar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExcluirContaRoute = ExcluirContaRouteImport.update({
+  id: '/excluir-conta',
+  path: '/excluir-conta',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExplorarRoute = ExplorarRouteImport.update({
   id: '/explorar',
   path: '/explorar',
@@ -50,6 +58,16 @@ const ExplorarRoute = ExplorarRouteImport.update({
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConversaIdRoute = ConversaIdRouteImport.update({
@@ -88,8 +106,11 @@ export interface FileRoutesByFullPath {
   '/boas-vindas': typeof BoasVindasRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/entrar': typeof EntrarRoute
+  '/excluir-conta': typeof ExcluirContaRoute
   '/explorar': typeof ExplorarRoute
   '/perfil': typeof PerfilRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/termos': typeof TermosRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
@@ -102,8 +123,11 @@ export interface FileRoutesByTo {
   '/boas-vindas': typeof BoasVindasRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/entrar': typeof EntrarRoute
+  '/excluir-conta': typeof ExcluirContaRoute
   '/explorar': typeof ExplorarRoute
   '/perfil': typeof PerfilRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/termos': typeof TermosRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
@@ -117,8 +141,11 @@ export interface FileRoutesById {
   '/boas-vindas': typeof BoasVindasRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/entrar': typeof EntrarRoute
+  '/excluir-conta': typeof ExcluirContaRoute
   '/explorar': typeof ExplorarRoute
   '/perfil': typeof PerfilRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/termos': typeof TermosRoute
   '/conversa/$id': typeof ConversaIdRoute
   '/criar/descrever': typeof CriarDescreverRoute
   '/criar/preparando': typeof CriarPreparandoRoute
@@ -133,8 +160,11 @@ export interface FileRouteTypes {
     | '/boas-vindas'
     | '/configuracoes'
     | '/entrar'
+    | '/excluir-conta'
     | '/explorar'
     | '/perfil'
+    | '/privacidade'
+    | '/termos'
     | '/conversa/$id'
     | '/criar/descrever'
     | '/criar/preparando'
@@ -147,8 +177,11 @@ export interface FileRouteTypes {
     | '/boas-vindas'
     | '/configuracoes'
     | '/entrar'
+    | '/excluir-conta'
     | '/explorar'
     | '/perfil'
+    | '/privacidade'
+    | '/termos'
     | '/conversa/$id'
     | '/criar/descrever'
     | '/criar/preparando'
@@ -161,8 +194,11 @@ export interface FileRouteTypes {
     | '/boas-vindas'
     | '/configuracoes'
     | '/entrar'
+    | '/excluir-conta'
     | '/explorar'
     | '/perfil'
+    | '/privacidade'
+    | '/termos'
     | '/conversa/$id'
     | '/criar/descrever'
     | '/criar/preparando'
@@ -176,8 +212,11 @@ export interface RootRouteChildren {
   BoasVindasRoute: typeof BoasVindasRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   EntrarRoute: typeof EntrarRoute
+  ExcluirContaRoute: typeof ExcluirContaRoute
   ExplorarRoute: typeof ExplorarRoute
   PerfilRoute: typeof PerfilRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
+  TermosRoute: typeof TermosRoute
   ConversaIdRoute: typeof ConversaIdRoute
   CriarDescreverRoute: typeof CriarDescreverRoute
   CriarPreparandoRoute: typeof CriarPreparandoRoute
@@ -216,6 +255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntrarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/excluir-conta': {
+      id: '/excluir-conta'
+      path: '/excluir-conta'
+      fullPath: '/excluir-conta'
+      preLoaderRoute: typeof ExcluirContaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explorar': {
       id: '/explorar'
       path: '/explorar'
@@ -228,6 +274,20 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conversa/$id': {
@@ -280,8 +340,11 @@ const rootRouteChildren: RootRouteChildren = {
   BoasVindasRoute: BoasVindasRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   EntrarRoute: EntrarRoute,
+  ExcluirContaRoute: ExcluirContaRoute,
   ExplorarRoute: ExplorarRoute,
   PerfilRoute: PerfilRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
+  TermosRoute: TermosRoute,
   ConversaIdRoute: ConversaIdRoute,
   CriarDescreverRoute: CriarDescreverRoute,
   CriarPreparandoRoute: CriarPreparandoRoute,
