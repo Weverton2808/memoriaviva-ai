@@ -46,6 +46,11 @@ function Configuracoes() {
   const [nome, setNome] = useState("");
   const [letraGrande, setLetraGrande] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
+  const [confirmacao, setConfirmacao] = useState("");
+  const [excluindo, setExcluindo] = useState(false);
+  const excluirConta__fn = useServerFn(deleteMyAccount);
+
 
   useEffect(() => setNome(profile?.name ?? ""), [profile?.name]);
 
@@ -65,6 +70,25 @@ function Configuracoes() {
       toast.error(mensagemDeErro(e));
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function excluirConta() {
+    setExcluindo(true);
+    try {
+      await excluirConta__fn({ data: { confirmacao: confirmacao.trim().toUpperCase() } });
+      setConfirmando(false);
+      toast.success("Sua conta e seus dados foram excluídos.");
+      try {
+        await sair();
+      } catch {
+        /* a conta já não existe: a sessão local é descartada mesmo assim */
+      }
+      void navigate({ to: "/" });
+    } catch (e) {
+      toast.error(mensagemDeErro(e));
+    } finally {
+      setExcluindo(false);
     }
   }
 
