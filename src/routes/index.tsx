@@ -58,7 +58,7 @@ function Home() {
       <section className="mv-entrada py-6 text-center sm:py-10">
         <span className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-4 py-2 text-sm font-semibold text-accent-foreground">
           <LogoIcone size={20} className="text-primary" />
-          Preservando experiências para o futuro
+          Versão beta — preservando experiências para o futuro
         </span>
 
         <h1 className="mt-6 text-4xl leading-tight text-foreground sm:text-5xl">
@@ -71,6 +71,10 @@ function Home() {
 
         <p className="mx-auto mt-3 max-w-md text-base text-muted-foreground">
           Você não precisa saber escrever, nem entender de tecnologia. É só contar.
+        </p>
+
+        <p className="mx-auto mt-3 max-w-md text-base font-semibold text-foreground">
+          Em 5 a 10 minutos de conversa, seu guia fica pronto.
         </p>
 
         <div className="mt-8 flex flex-col items-center gap-3">
@@ -89,6 +93,10 @@ function Home() {
           >
             <Link to="/explorar">Explorar conhecimentos</Link>
           </Button>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            Estamos construindo uma nova forma de preservar experiências humanas. Esta é a versão
+            beta — seus comentários ajudam a melhorar.
+          </p>
         </div>
       </section>
 

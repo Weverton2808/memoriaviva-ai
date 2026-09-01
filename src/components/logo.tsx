@@ -37,6 +37,9 @@ export function Logo({ className }: { className?: string }) {
       <span className="font-display text-lg font-extrabold tracking-tight text-foreground">
         Memória Viva
       </span>
+      <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-accent-foreground">
+        Beta
+      </span>
     </span>
   );
 }
